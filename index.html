@@ -154,6 +154,15 @@ textarea{resize:vertical;min-height:70px}
 .brow .nm3 span{font-weight:700}
 .brow .bar{height:clamp(10px,1.6vw,18px);border-radius:9px;transition:width .5s}
 .brow .pt{font-family:var(--mono);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.bigcols{width:min(1200px,100%);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:clamp(20px,4vw,48px);align-items:start}
+.bigcol h3{margin:0 0 14px;font-size:clamp(18px,2.4vw,28px);color:var(--muted);font-weight:700}
+.biglist.p .brow{font-size:clamp(16px,2.3vw,28px)}
+.pscroll{max-height:340px;overflow:auto;margin-top:6px}
+.hrow .btns{flex-wrap:wrap;justify-content:flex-end}
+.hrow .who{min-width:0;overflow-wrap:anywhere}
+.hrow.p{grid-template-columns:1fr}
+.hrow.p .btns{justify-content:flex-start}
+.mypts{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .bump{animation:bump .6s ease-out}
 @keyframes bump{0%{transform:scale(1)}30%{transform:scale(1.35);color:var(--line)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.bump{animation:none}.srow .bar,.brow .bar{transition:none}}
@@ -237,6 +246,12 @@ textarea{resize:vertical;min-height:70px}
       <p class="legend">클릭(탭)한 곳으로 걸어가요 · 방향키/WASD로도 이동 · 방에 들어가면 오른쪽에 안내가 떠요</p>
     </div>
     <aside class="rail">
+      <div class="card" id="meCard" hidden>
+        <div class="kicker">개인 점수</div>
+        <h3><span class="mypts" id="myPts">0</span>점 <small class="note" id="myRank"></small></h3>
+        <div class="scorelist" id="pTop"></div>
+        <div class="row"><button class="btn small" id="bigBoardBtn2" type="button">점수판 크게 보기</button></div>
+      </div>
       <div class="card" id="teamCard" hidden>
         <div class="kicker">팀 대항전</div>
         <h3 id="myTeamName">우리 팀</h3>
@@ -286,9 +301,15 @@ textarea{resize:vertical;min-height:70px}
           <option value="4">4팀</option><option value="5">5팀</option><option value="6">6팀</option></select></label>
         <div id="hTeamNames" class="scorelist"></div>
         <div class="row"><button class="btn small primary" id="hTeamSave" type="button">팀 저장</button>
-          <button class="btn small" id="hScoreReset" type="button">점수 0으로</button></div>
+          <button class="btn small" id="hScoreReset" type="button">팀 점수 0으로</button></div>
         <div id="hScore"></div>
         <span class="status" id="hTeamStatus"></span>
+        <div class="kicker" style="margin-top:12px">개인 점수</div>
+        <p class="note" style="margin:4px 0">팀전 코너는 위의 팀 점수, 개인전 코너는 여기서 사람별로 줘요.</p>
+        <input type="search" id="hPSearch" placeholder="이름 검색" aria-label="개인 점수 줄 사람 이름 검색" autocomplete="off">
+        <div id="hPScore" class="pscroll"></div>
+        <div class="row"><button class="btn small" id="hPReset" type="button">개인 점수 0으로</button></div>
+        <span class="status" id="hPStatus"></span>
       </div>
     </aside>
   </section>
@@ -306,8 +327,11 @@ textarea{resize:vertical;min-height:70px}
 </div>
 
 <div class="bigboard" id="bigBoard" hidden>
-  <h2>🏆 팀 점수판</h2>
-  <div class="biglist" id="bigList"></div>
+  <h2>🏆 점수판</h2>
+  <div class="bigcols">
+    <div class="bigcol" id="bigTeamCol"><h3>팀 점수</h3><div class="biglist" id="bigList"></div></div>
+    <div class="bigcol"><h3>개인 TOP 10</h3><div class="biglist p" id="bigPList"></div></div>
+  </div>
   <button class="btn" id="bigClose" type="button">닫기</button>
 </div>
 <script src="firebase-config.js"></script>
@@ -507,7 +531,7 @@ async function enterLab(prof){
   me = {...prof, x:SPAWN.x, y:SPAWN.y};
   ssSet("usdl-me3", JSON.stringify(prof));
   show("labView");
-  renderTeams(); setTimeout(goTeam, 400);
+  renderTeams(); renderPersonal(); setTimeout(goTeam, 400);
   armPresence();
   sendPresence(true);
   renderAll();
@@ -670,11 +694,11 @@ async function saveConfig(patch,msg){
 
 /* ---------- teams ---------- */
 const lastScores = new Map();
-function rowEl(cls, t, rank, max, mine){
+function rowEl(cls, t, rank, max, mine, suffix=" (우리 팀)"){
   const r=document.createElement("div"); r.className=cls+(mine?" mine":"");
   const rk=document.createElement("span"); rk.className="rk"; rk.textContent=rank;
   const nm=document.createElement("div"); nm.className=cls==="srow"?"nm2":"nm3";
-  const n=document.createElement("span"); n.textContent=t.name+(mine?" (우리 팀)":"");
+  const n=document.createElement("span"); n.textContent=t.name+(mine?suffix:"");
   const bar=document.createElement("div"); bar.className="bar"; bar.style.background=t.color; bar.style.width=(max>0?Math.max(4,t.score/max*100):4)+"%";
   nm.append(n,bar);
   const pt=document.createElement("span"); pt.className="pt"; pt.textContent=t.score+"점";
@@ -715,6 +739,7 @@ function renderTeams(){
   renderEntry();
   if(canEdit) fillTeamHost();
   if(me) { renderMe(); renderPeers(); }
+  renderPersonal();
 }
 function setMyTeam(id){
   if(!me) return; me.team=id; ssSet("usdl-me3", JSON.stringify({name:me.name,color:me.color,badge:me.badge,lab:me.lab,team:id}));
@@ -776,6 +801,56 @@ async function resetScores(){
   catch(e){ $("hTeamStatus").textContent="바꾸지 못했어요."; }
 }
 
+/* ---------- personal scores ---------- */
+let checkins={}, pscores={}, lastMyPts=null;
+function people(){
+  return Object.entries(checkins).map(([id,c])=>{ c=c||{}; const t=teamOf(c.team);
+    return {id, name:String(c.alias||"익명").slice(0,12), team:t?t.name:"", color:(t&&t.color)||c.color||"#8a8f88", score:Number(pscores[id])||0}; });
+}
+function rankList(list){ const out=[]; list.forEach((p,i)=>{ out.push({...p, rank: i>0 && list[i-1].score===p.score ? out[i-1].rank : i+1}); }); return out; }
+function renderPersonal(){
+  const ranked=rankList(people().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,"ko")));
+  const scored=ranked.filter(p=>p.score>0); const max=Math.max(0,...ranked.map(p=>p.score));
+  $("meCard").hidden=!me;
+  const mine=Number(pscores[uid])||0; const el=$("myPts"); el.textContent=mine;
+  if(lastMyPts!==null && lastMyPts!==mine){ el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); } lastMyPts=mine;
+  const meRow=ranked.find(p=>p.id===uid);
+  $("myRank").textContent = meRow && mine>0 ? "· "+meRow.rank+"위 / "+ranked.length+"명" : "";
+  const top=$("pTop"); top.textContent="";
+  if(!scored.length){ const n=document.createElement("p"); n.className="note"; n.style.margin="0"; n.textContent="아직 개인 점수가 없어요."; top.appendChild(n); }
+  scored.slice(0,5).forEach(p=>top.appendChild(rowEl("srow",p,p.rank,max,p.id===uid," (나)")));
+  const bp=$("bigPList"); bp.textContent="";
+  if(!scored.length){ const n=document.createElement("p"); n.className="note"; n.textContent="아직 개인 점수가 없어요."; bp.appendChild(n); }
+  scored.slice(0,10).forEach(p=>bp.appendChild(rowEl("brow",p,p.rank,max,false)));
+  $("bigTeamCol").hidden = teamList().length===0;
+  if(canEdit) renderHostP();
+}
+function renderHostP(){
+  const q=($("hPSearch").value||"").trim(); const box=$("hPScore"); box.textContent="";
+  const list=people().filter(p=>!q||p.name.includes(q)).sort((a,b)=>a.name.localeCompare(b.name,"ko"));
+  if(!list.length){ const n=document.createElement("p"); n.className="note"; n.textContent=q?"찾는 이름이 없어요.":"아직 입장한 사람이 없어요."; box.appendChild(n); return; }
+  for(const p of list){
+    const r=document.createElement("div"); r.className="hrow p";
+    const l=document.createElement("span"); l.className="who"; const dot=document.createElement("i");
+    dot.style.cssText="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:"+p.color;
+    l.append(dot,document.createTextNode(p.name+(p.team?" ("+p.team+")":"")+" · "+p.score+"점"));
+    const bs=document.createElement("div"); bs.className="btns";
+    for(const d of [-1,1,5,10,15,20]){ const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent=(d>0?"+":"")+d;
+      b.setAttribute("aria-label",p.name+" "+(d>0?"+":"")+d+"점"); b.onclick=()=>addPScore(p.id,d); bs.appendChild(b); }
+    r.append(l,bs); box.appendChild(r);
+  }
+}
+async function addPScore(id,d){
+  if(!fx) return;
+  try{ await fx.runTransaction(R("pscore/"+id), cur=>(Number(cur)||0)+d); $("hPStatus").textContent=""; }
+  catch(e){ $("hPStatus").textContent="점수를 바꾸지 못했어요. 진행자 로그인을 확인해 주세요."; }
+}
+async function resetPScores(){
+  if(!fx) return; if(!confirm("개인 점수를 모두 0으로 바꿀까요?")) return;
+  try{ await fx.set(R("pscore"),null); $("hPStatus").textContent="개인 점수를 0으로 바꿨어요."; }
+  catch(e){ $("hPStatus").textContent="바꾸지 못했어요."; }
+}
+
 /* ---------- wiring ---------- */
 function selectTab(t){ for(const b of document.querySelectorAll(".tab")){b.setAttribute("aria-selected",String(b.dataset.t===t));} for(const p of ["sched","gb","ppl"]) $("pane-"+p).hidden=p!==t; }
 function wire(){
@@ -804,7 +879,10 @@ function wire(){
     if(ok){ $("hostKey").value=""; $("hostLoginStatus").textContent=""; becomeHost(); }
     else { $("hostLoginStatus").textContent="비밀번호가 맞지 않아요. Firebase 데이터 탭의 secret › hostKey 값과 같은지 확인해 주세요."; } };
   $("bigBoardBtn").onclick=()=>{ $("bigBoard").hidden=false; $("bigClose").focus(); };
+  $("bigBoardBtn2").onclick=()=>{ renderPersonal(); $("bigBoard").hidden=false; $("bigClose").focus(); };
   $("bigClose").onclick=()=>{ $("bigBoard").hidden=true; };
+  $("hPSearch").oninput=()=>renderHostP();
+  $("hPReset").onclick=()=>resetPScores();
   document.addEventListener("keydown",e=>{ if(e.key==="Escape") $("bigBoard").hidden=true; });
   $("goTeamBtn").onclick=()=>goTeam();
   $("changeTeamBtn").onclick=()=>{ const tc=$("teamChange"); tc.hidden=!tc.hidden; renderTeams(); };
@@ -815,7 +893,7 @@ function wire(){
 }
 
 /* ---------- boot ---------- */
-function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); }
+function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderHostP(); }
 function failGate(msg){ $("gateNote").dataset.err=msg; $("gateNote").textContent=msg; $("liveText").textContent="연결 안 됨"; }
 async function boot(){
   drawPlan(); wire(); renderSchedule(); buildEntry(""); renderGate(); show("gateView");
@@ -844,7 +922,8 @@ async function boot(){
       if(saved && !me && (isOpen()||canEdit)) enterLab(saved); },
     ()=>{ clearTimeout(timer); failGate("입장 정보를 읽을 수 없어요. 데이터베이스 규칙을 확인해 주세요."); });
   fx.onValue(R("teams"), s=>{ teams = s.val()||{}; renderTeams(); }, ()=>{});
-  fx.onValue(R("checkin"), s=>{ $("checkChip").hidden=false; $("checkN").textContent=s.size; }, ()=>{});
+  fx.onValue(R("checkin"), s=>{ $("checkChip").hidden=false; $("checkN").textContent=s.size; checkins=s.val()||{}; renderPersonal(); }, ()=>{});
+  fx.onValue(R("pscore"), s=>{ pscores=s.val()||{}; renderPersonal(); }, ()=>{});
   fx.onValue(R("presence"), s=>{ presData = s.val()||{}; if(me) renderPeers(); }, ()=>{});
   fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists() && !claiming) becomeHost(); }, ()=>{});
   startGuestbook();
