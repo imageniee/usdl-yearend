@@ -131,6 +131,32 @@ textarea{resize:vertical;min-height:70px}
 .host{border-color:var(--line)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .status{font-size:13px;color:var(--muted);min-height:1.2em}
+.teamboard{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tchip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-weight:700;font-size:13px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.tchip b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.scorelist{display:flex;flex-direction:column;gap:6px}
+.srow{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;font-size:14px}
+.srow .rk{font-family:var(--mono);color:var(--muted);text-align:right}
+.srow .nm2{display:flex;flex-direction:column;gap:3px;min-width:0}
+.srow .bar{height:7px;border-radius:4px;transition:width .4s}
+.srow .pt{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;color:var(--ink)}
+.srow.mine .nm2 span{text-decoration:underline;text-underline-offset:3px}
+.hrow{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid rgba(216,181,106,.15)}
+.hrow .btns{display:flex;gap:4px}
+.hrow .btns button{min-width:38px}
+.bigboard{position:fixed;inset:0;z-index:50;background:rgba(6,12,9,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  padding:max(24px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px))}
+.bigboard h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,56px);color:var(--line);margin:0}
+.biglist{width:min(900px,100%);display:flex;flex-direction:column;gap:14px}
+.brow{display:grid;grid-template-columns:clamp(40px,6vw,70px) 1fr clamp(90px,14vw,160px);gap:16px;align-items:center;font-size:clamp(20px,3.4vw,40px)}
+.brow .rk{font-family:var(--mono);color:var(--muted);text-align:right}
+.brow .nm3{display:flex;flex-direction:column;gap:8px;min-width:0}
+.brow .nm3 span{font-weight:700}
+.brow .bar{height:clamp(10px,1.6vw,18px);border-radius:9px;transition:width .5s}
+.brow .pt{font-family:var(--mono);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.bump{animation:bump .6s ease-out}
+@keyframes bump{0%{transform:scale(1)}30%{transform:scale(1.35);color:var(--line)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.bump{animation:none}.srow .bar,.brow .bar{transition:none}}
 .legend{font-family:var(--mono);font-size:11px;color:var(--muted)}
 </style>
 </head>
@@ -145,6 +171,8 @@ textarea{resize:vertical;min-height:70px}
     <span class="chip" id="checkChip" hidden>입장 <b id="checkN">0</b>명</span>
   </header>
 
+  <div class="banner" id="teamStrip" hidden><span>🏆 팀 점수</span><div class="teamboard" id="teamStripList"></div>
+    <button class="btn small" id="bigBoardBtn" type="button">점수판 크게 보기</button></div>
   <div class="banner" id="nowBanner" hidden><span>📺 지금 진행 중</span><b id="nowText"></b><span class="note" id="nowWhere"></span></div>
 
   <!-- gate -->
@@ -184,6 +212,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="charrow"><span class="pvbig" id="pvBig"></span><div style="min-width:0"><div class="eyebrow">내 캐릭터</div><div id="pvText" style="font-weight:700"></div><p class="note" style="margin:2px 0 0">소속에 따라 소품이, 연구실에 따라 옷 색이 정해져요.</p></div></div>
       <div class="f"><span class="note">소속</span><div class="badges" id="badges"></div></div>
       <div class="f"><span class="note" id="labLabel">지도교수님</span><div class="badges" id="labs"></div></div>
+      <div class="f" id="teamField" hidden><span class="note">팀 (진행자가 알려준 팀을 골라 주세요)</span><div class="badges" id="teamsPick"></div></div>
       <div class="row"><button class="btn primary" type="submit" id="goBtn">연구실로 들어가기</button>
         <span class="note">본명, 소속, 연구실은 이번 접속에서만 쓰여요.</span></div>
     </form>
@@ -208,6 +237,16 @@ textarea{resize:vertical;min-height:70px}
       <p class="legend">클릭(탭)한 곳으로 걸어가요 · 방향키/WASD로도 이동 · 방에 들어가면 오른쪽에 안내가 떠요</p>
     </div>
     <aside class="rail">
+      <div class="card" id="teamCard" hidden>
+        <div class="kicker">팀 대항전</div>
+        <h3 id="myTeamName">우리 팀</h3>
+        <div class="scorelist" id="scoreList"></div>
+        <div class="row">
+          <button class="btn small" id="goTeamBtn" type="button">우리 팀 자리로</button>
+          <button class="btn small" id="changeTeamBtn" type="button">팀 바꾸기</button>
+        </div>
+        <div class="badges" id="teamChange" hidden></div>
+      </div>
       <div class="card" id="zoneCard">
         <div class="kicker" id="zoneKicker">현재 위치</div>
         <h3 id="zoneName">중정 홀</h3>
@@ -241,6 +280,15 @@ textarea{resize:vertical;min-height:70px}
           <button class="btn small" id="hClose">문 닫기</button>
         </div>
         <span class="status" id="hStatus"></span>
+        <div class="kicker" style="margin-top:10px">팀 대항전</div>
+        <label class="f" for="hTeamN">팀 수<select id="hTeamN">
+          <option value="0">팀전 안 함</option><option value="2">2팀</option><option value="3">3팀</option>
+          <option value="4">4팀</option><option value="5">5팀</option><option value="6">6팀</option></select></label>
+        <div id="hTeamNames" class="scorelist"></div>
+        <div class="row"><button class="btn small primary" id="hTeamSave" type="button">팀 저장</button>
+          <button class="btn small" id="hScoreReset" type="button">점수 0으로</button></div>
+        <div id="hScore"></div>
+        <span class="status" id="hTeamStatus"></span>
       </div>
     </aside>
   </section>
@@ -257,6 +305,11 @@ textarea{resize:vertical;min-height:70px}
   </footer>
 </div>
 
+<div class="bigboard" id="bigBoard" hidden>
+  <h2>🏆 팀 점수판</h2>
+  <div class="biglist" id="bigList"></div>
+  <button class="btn" id="bigClose" type="button">닫기</button>
+</div>
 <script src="firebase-config.js"></script>
 <script>
 (() => {
@@ -315,7 +368,13 @@ function charSVG(role,col){
   }
   return `<svg viewBox="0 0 40 48" width="100%" height="100%" aria-hidden="true"><ellipse cx="20" cy="41" rx="12" ry="8" fill="${col}"/>${body}<rect x="17" y="30" width="6" height="4" fill="${skin}"/><circle cx="20" cy="21" r="11" fill="${skin}"/>${hairP}<circle cx="15.5" cy="21.5" r="1.5" fill="#222"/><circle cx="24.5" cy="21.5" r="1.5" fill="#222"/><path d="M17.5 26 Q20 28 22.5 26" fill="none" stroke="#8a4b3a" stroke-width="1.2" stroke-linecap="round"/><circle cx="13" cy="25" r="1.6" fill="#f1a9a0" opacity=".7"/><circle cx="27" cy="25" r="1.6" fill="#f1a9a0" opacity=".7"/>${front}</svg>`;
 }
-const SPAWN = {x:500,y:585};
+const SPAWN = {x:500,y:590};
+const TEAM_DEFAULTS = [["산타팀","#e74c3c"],["루돌프팀","#b5651d"],["트리팀","#27ae60"],["눈사람팀","#2f80ed"],["선물팀","#9b51e0"],["별팀","#e0b100"]];
+const TEAM_SLOTS = [[370,455],[500,455],[630,455],[370,528],[500,528],[630,528]];
+let teams = {};
+const teamList = ()=>Object.entries(teams).filter(([id,t])=>t&&typeof t==="object").map(([id,t])=>({id,name:String(t.name||id).slice(0,10),
+  color:/^#[0-9a-f]{6}$/i.test(t.color||"")?t.color:"#777777",score:Number(t.score)||0,order:Number(t.order)||0})).sort((a,b)=>a.order-b.order);
+const teamOf = (id)=>teamList().find(t=>t.id===id)||null;
 
 /* ---------- floor plan ---------- */
 function drawPlan(){
@@ -436,6 +495,9 @@ function renderEntry(){
   pillRow($("labs"), LABS.map(l=>({id:l.id,label:l.prof,color:l.color})), pick.lab, id=>{pick.lab=id; renderEntry();});
   $("pvBig").innerHTML = charSVG(pick.badge, lab.color);
   $("pvText").textContent = pick.badge==="교수님" ? lab.prof : `${pick.badge} · ${lab.short}`;
+  const tl=teamList(); $("teamField").hidden=!tl.length;
+  if(tl.length){ if(!teamOf(pick.team)) pick.team=null;
+    pillRow($("teamsPick"), tl.map(t=>({id:t.id,label:t.name,color:t.color})), pick.team, id=>{pick.team=id; renderEntry();}); }
 }
 function buildEntry(defaultName){
   renderEntry();
@@ -445,12 +507,13 @@ async function enterLab(prof){
   me = {...prof, x:SPAWN.x, y:SPAWN.y};
   ssSet("usdl-me3", JSON.stringify(prof));
   show("labView");
+  renderTeams(); setTimeout(goTeam, 400);
   armPresence();
   sendPresence(true);
   renderAll();
   $("map").focus({preventScroll:true});
   if (fx && uid){
-    try { await fx.set(R("checkin/"+uid),{alias:prof.name, color:prof.color, badge:prof.badge, lab:prof.lab||null, at:new Date().toISOString()}); } catch(e){}
+    try { await fx.set(R("checkin/"+uid),{alias:prof.name, color:prof.color, badge:prof.badge, lab:prof.lab||null, team:prof.team||null, at:new Date().toISOString()}); } catch(e){}
   }
 }
 
@@ -458,7 +521,7 @@ async function enterLab(prof){
 function sendPresence(force){
   if(!fx||!me) return;
   const now=performance.now(); if(!force && now-lastSent<150) return; lastSent=now;
-  pres({name:me.name,color:me.color,badge:me.badge,lab:me.lab||null,x:Math.round(me.x),y:Math.round(me.y),zone:zoneAt(me.x,me.y).id});
+  pres({name:me.name,color:me.color,badge:me.badge,lab:me.lab||null,team:me.team||null,x:Math.round(me.x),y:Math.round(me.y),zone:zoneAt(me.x,me.y).id});
 }
 function say(text){
   if(!me) return; const t=text.trim().slice(0,40); if(!t) return;
@@ -482,7 +545,8 @@ function placeAv(a,p,label){
   const col=typeof p.color==="string"&&/^#[0-9a-f]{6}$/i.test(p.color)?p.color:"#777777";
   const lab=labOf(p.lab), role=roleOf(p.badge), c2=lab?lab.color:col;
   if(d.dataset.k!==role+c2){ d.dataset.k=role+c2; d.innerHTML=charSVG(role,c2); }
-  a.querySelector(".nm").textContent=label;
+  const nmEl=a.querySelector(".nm"); nmEl.textContent=label;
+  const T=teamOf(p.team); nmEl.style.background = T ? T.color : ""; nmEl.style.color = T ? "#fff" : "";
 }
 function showBubble(a,text){
   let b=a.querySelector(".bubble"); if(!b){b=document.createElement("div");b.className="bubble";a.appendChild(b);}
@@ -504,7 +568,7 @@ function renderPeers(){
     if(x===null||y===null) continue;
     live.add(p.peer);
     const a=avatarEl(p.peer);
-    placeAv(a,{x,y,color:pr.color,name:pr.name,badge:pr.badge,lab:pr.lab},String(pr.name||"참가자").slice(0,12)+(p.guest?" · 게스트":""));
+    placeAv(a,{x,y,color:pr.color,name:pr.name,badge:pr.badge,lab:pr.lab,team:pr.team},String(pr.name||"참가자").slice(0,12)+(p.guest?" · 게스트":""));
     a.style.opacity = (Date.now()-p.updatedAt>120000)?.5:1;
     const seen=peerSeen.get(p.peer)||{};
     if(pr.sayAt && pr.sayAt!==seen.sayAt && typeof pr.say==="string"){ if(seen.sayAt!==undefined||Date.now()-p.updatedAt<8000) showBubble(a,pr.say.slice(0,40)); seen.sayAt=pr.sayAt; }
@@ -516,9 +580,10 @@ function renderPeers(){
   const list=$("pplList"); list.textContent="";
   const people=[];
   const tag=(b,l)=>{const L=labOf(l); return (roleOf(b)==="교수님"?"교수님":roleOf(b))+(L&&roleOf(b)!=="교수님"?" · "+L.prof.replace(" 교수님","")+"랩":"");};
-  if(me) people.push({name:me.name+" (나)",color:me.color,zone:tag(me.badge,me.lab)});
+  const tg2=(t)=>{const T=teamOf(t); return T?" · "+T.name:"";};
+  if(me) people.push({name:me.name+" (나)",color:(teamOf(me.team)||{}).color||me.color,zone:tag(me.badge,me.lab)+tg2(me.team)});
   for(const p of peers){ if(p.sameTab||p.kind!=="viewer") continue; const pr=p.presence||{}; if(!pr.name) continue;
-    const L=labOf(pr.lab); people.push({name:String(pr.name).slice(0,12),color:L?L.color:pr.color,zone:tag(pr.badge,pr.lab)}); }
+    const L=labOf(pr.lab); people.push({name:String(pr.name).slice(0,12),color:(teamOf(pr.team)||{}).color||(L?L.color:pr.color),zone:tag(pr.badge,pr.lab)+tg2(pr.team)}); }
   for(const pp of people){const s=document.createElement("span");const i=document.createElement("i");i.style.background=/^#[0-9a-f]{6}$/i.test(pp.color||"")?pp.color:"#777";s.append(i,document.createTextNode(pp.name+(pp.zone?" · "+pp.zone:"")));list.appendChild(s);}
   if(!people.length){const s=document.createElement("span");s.textContent="아직 아무도 없어요";list.appendChild(s);}
   $("liveText").textContent = fx ? `지금 ${Math.max(people.length,1)}명 접속` : "혼자 보는 중";
@@ -602,13 +667,123 @@ async function saveConfig(patch,msg){
   catch(e){ $("hStatus").textContent="저장하지 못했어요. 진행자 비밀번호를 다시 확인해 주세요."; }
 }
 
+
+/* ---------- teams ---------- */
+const lastScores = new Map();
+function rowEl(cls, t, rank, max, mine){
+  const r=document.createElement("div"); r.className=cls+(mine?" mine":"");
+  const rk=document.createElement("span"); rk.className="rk"; rk.textContent=rank;
+  const nm=document.createElement("div"); nm.className=cls==="srow"?"nm2":"nm3";
+  const n=document.createElement("span"); n.textContent=t.name+(mine?" (우리 팀)":"");
+  const bar=document.createElement("div"); bar.className="bar"; bar.style.background=t.color; bar.style.width=(max>0?Math.max(4,t.score/max*100):4)+"%";
+  nm.append(n,bar);
+  const pt=document.createElement("span"); pt.className="pt"; pt.textContent=t.score+"점";
+  const prev=lastScores.get(cls+t.id); if(prev!==undefined && prev!==t.score){ pt.classList.add("bump"); }
+  lastScores.set(cls+t.id,t.score);
+  r.append(rk,nm,pt); return r;
+}
+function drawTeamBases(){
+  const svg=$("plan"); let g=svg.querySelector("#teamBases");
+  if(!g){ g=document.createElementNS("http://www.w3.org/2000/svg","g"); g.setAttribute("id","teamBases"); svg.appendChild(g); }
+  g.textContent="";
+  teamList().slice(0,6).forEach((t,i)=>{
+    const [x,y]=TEAM_SLOTS[i]; const NS="http://www.w3.org/2000/svg";
+    const c=document.createElementNS(NS,"circle"); c.setAttribute("cx",x); c.setAttribute("cy",y); c.setAttribute("r",30);
+    c.setAttribute("fill",t.color); c.setAttribute("fill-opacity",".22"); c.setAttribute("stroke",t.color); c.setAttribute("stroke-width",2); g.appendChild(c);
+    const tx=document.createElementNS(NS,"text"); tx.setAttribute("x",x); tx.setAttribute("y",y-3); tx.setAttribute("text-anchor","middle");
+    tx.setAttribute("fill","#f2ecdf"); tx.setAttribute("font-size",11); tx.setAttribute("font-weight",700); tx.textContent=t.name; g.appendChild(tx);
+    const sc=document.createElementNS(NS,"text"); sc.setAttribute("x",x); sc.setAttribute("y",y+13); sc.setAttribute("text-anchor","middle");
+    sc.setAttribute("fill",t.color); sc.setAttribute("font-size",12); sc.setAttribute("font-family","IBM Plex Mono, monospace"); sc.textContent=t.score+"점"; g.appendChild(sc);
+  });
+}
+function renderTeams(){
+  const tl=teamList(); const ranked=[...tl].sort((a,b)=>b.score-a.score); const max=Math.max(0,...tl.map(t=>t.score));
+  const on=tl.length>0;
+  $("teamStrip").hidden=!on || !me; $("teamCard").hidden=!on || !me;
+  const strip=$("teamStripList"); strip.textContent="";
+  for(const t of ranked){ const c=document.createElement("span"); c.className="tchip"; c.style.background=t.color;
+    const n=document.createElement("span"); n.textContent=t.name; const b=document.createElement("b"); b.textContent=t.score;
+    const prev=lastScores.get("chip"+t.id); if(prev!==undefined&&prev!==t.score) b.classList.add("bump"); lastScores.set("chip"+t.id,t.score);
+    c.append(n,b); strip.appendChild(c); }
+  const mine=me&&teamOf(me.team);
+  $("myTeamName").textContent = mine ? mine.name : "팀을 골라 주세요";
+  $("myTeamName").style.color = mine ? mine.color : "";
+  const sl=$("scoreList"); sl.textContent=""; ranked.forEach((t,i)=>sl.appendChild(rowEl("srow",t,i+1,max,mine&&mine.id===t.id)));
+  const bl=$("bigList"); bl.textContent=""; ranked.forEach((t,i)=>bl.appendChild(rowEl("brow",t,i+1,max,false)));
+  const tc=$("teamChange"); if(!tc.hidden) pillRow(tc, tl.map(t=>({id:t.id,label:t.name,color:t.color})), me&&me.team, id=>setMyTeam(id));
+  drawTeamBases();
+  renderEntry();
+  if(canEdit) fillTeamHost();
+  if(me) { renderMe(); renderPeers(); }
+}
+function setMyTeam(id){
+  if(!me) return; me.team=id; ssSet("usdl-me3", JSON.stringify({name:me.name,color:me.color,badge:me.badge,lab:me.lab,team:id}));
+  $("teamChange").hidden=true; sendPresence(true);
+  if(fx&&uid) fx.update(R("checkin/"+uid),{team:id}).catch(()=>{});
+  renderTeams(); goTeam();
+}
+function goTeam(){
+  if(!me) return; const i=teamList().findIndex(t=>me&&t.id===me.team); if(i<0||i>5) return;
+  const [x,y]=TEAM_SLOTS[i]; target={x:x+(Math.random()*30-15), y:y+(Math.random()*16-8)};
+}
+let hostTeamDraft=null;
+function fillTeamHost(){
+  const tl=teamList();
+  if(document.activeElement && document.activeElement.closest && document.activeElement.closest("#hTeamNames")) { renderHostScores(); return; }
+  const n = hostTeamDraft!==null ? hostTeamDraft : tl.length;
+  $("hTeamN").value=String(n);
+  const box=$("hTeamNames"); box.textContent="";
+  for(let i=0;i<n;i++){
+    const t=tl[i]; const inp=document.createElement("input"); inp.type="text"; inp.maxLength=10; inp.id="hTeamName"+i;
+    inp.value = t ? t.name : TEAM_DEFAULTS[i][0]; inp.setAttribute("aria-label",(i+1)+"번째 팀 이름");
+    inp.style.borderLeft="6px solid "+(t?t.color:TEAM_DEFAULTS[i][1]); box.appendChild(inp);
+  }
+  renderHostScores();
+}
+function renderHostScores(){
+  const box=$("hScore"); box.textContent="";
+  for(const t of teamList()){
+    const r=document.createElement("div"); r.className="hrow";
+    const l=document.createElement("span"); l.innerHTML=""; const dot=document.createElement("i");
+    dot.style.cssText="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:"+t.color;
+    l.append(dot,document.createTextNode(t.name+" · "+t.score+"점"));
+    const bs=document.createElement("div"); bs.className="btns";
+    for(const d of [-1,1,5,10]){ const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent=(d>0?"+":"")+d;
+      b.setAttribute("aria-label",t.name+" "+(d>0?"+":"")+d+"점"); b.onclick=()=>addScore(t.id,d); bs.appendChild(b); }
+    r.append(l,bs); box.appendChild(r);
+  }
+}
+async function addScore(id,d){
+  if(!fx) return;
+  try{ await fx.runTransaction(R("teams/"+id+"/score"), cur=>(Number(cur)||0)+d); $("hTeamStatus").textContent=""; }
+  catch(e){ $("hTeamStatus").textContent="점수를 바꾸지 못했어요. 진행자 로그인을 확인해 주세요."; }
+}
+async function saveTeams(){
+  if(!fx) return; const n=Number($("hTeamN").value)||0; const tl=teamList(); const next={};
+  for(let i=0;i<n;i++){
+    const old=tl[i]; const id=old?old.id:("t"+(i+1)+"_"+Date.now().toString(36));
+    const name=(($("hTeamName"+i)||{}).value||TEAM_DEFAULTS[i][0]).trim().slice(0,10)||TEAM_DEFAULTS[i][0];
+    next[id]={name, color:old?old.color:TEAM_DEFAULTS[i][1], score:old?old.score:0, order:i};
+  }
+  $("hTeamStatus").textContent="저장 중…";
+  try{ await fx.set(R("teams"), n?next:null); hostTeamDraft=null; $("hTeamStatus").textContent = n ? n+"팀으로 저장했어요." : "팀전을 껐어요."; }
+  catch(e){ $("hTeamStatus").textContent="저장하지 못했어요. 진행자 로그인을 확인해 주세요."; }
+}
+async function resetScores(){
+  if(!fx) return; const upd={}; for(const t of teamList()) upd[t.id+"/score"]=0;
+  if(!Object.keys(upd).length) return;
+  try{ await fx.update(R("teams"),upd); $("hTeamStatus").textContent="점수를 0으로 바꿨어요."; }
+  catch(e){ $("hTeamStatus").textContent="바꾸지 못했어요."; }
+}
+
 /* ---------- wiring ---------- */
 function selectTab(t){ for(const b of document.querySelectorAll(".tab")){b.setAttribute("aria-selected",String(b.dataset.t===t));} for(const p of ["sched","gb","ppl"]) $("pane-"+p).hidden=p!==t; }
 function wire(){
   document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>selectTab(b.dataset.t));
   $("enterBtn").onclick=()=>{ show("entryView"); $("nick").focus(); };
   $("previewBtn").onclick=()=>{ show("entryView"); $("nick").focus(); };
-  $("entryForm").onsubmit=(e)=>{ e.preventDefault(); const n=$("nick").value.trim().slice(0,12); if(!n){$("nick").focus();return;} enterLab({name:n,color:labOf(pick.lab).color,badge:pick.badge,lab:pick.lab}); };
+  $("entryForm").onsubmit=(e)=>{ e.preventDefault(); const n=$("nick").value.trim().slice(0,12); if(!n){$("nick").focus();return;} if(teamList().length && !pick.team){ $("teamField").scrollIntoView({block:"center"}); $("teamsPick").animate([{transform:"translateX(-6px)"},{transform:"translateX(6px)"},{transform:"none"}],{duration:300}); return; }
+    enterLab({name:n,color:labOf(pick.lab).color,badge:pick.badge,lab:pick.lab,team:pick.team||null}); };
   $("map").addEventListener("pointerdown",e=>{ if(!me) return; const p=mapPoint(e); target={x:p.x,y:p.y}; });
   $("map").addEventListener("keydown",e=>{ const k=e.key.length===1?e.key.toLowerCase():e.key; if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","w","a","s","d"].includes(k)){keys.add(k);e.preventDefault();} });
   $("map").addEventListener("keyup",e=>{ const k=e.key.length===1?e.key.toLowerCase():e.key; keys.delete(k); sendPresence(true); });
@@ -628,11 +803,19 @@ function wire(){
     claiming=false;
     if(ok){ $("hostKey").value=""; $("hostLoginStatus").textContent=""; becomeHost(); }
     else { $("hostLoginStatus").textContent="비밀번호가 맞지 않아요. Firebase 데이터 탭의 secret › hostKey 값과 같은지 확인해 주세요."; } };
+  $("bigBoardBtn").onclick=()=>{ $("bigBoard").hidden=false; $("bigClose").focus(); };
+  $("bigClose").onclick=()=>{ $("bigBoard").hidden=true; };
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") $("bigBoard").hidden=true; });
+  $("goTeamBtn").onclick=()=>goTeam();
+  $("changeTeamBtn").onclick=()=>{ const tc=$("teamChange"); tc.hidden=!tc.hidden; renderTeams(); };
+  $("hTeamN").onchange=()=>{ hostTeamDraft=Number($("hTeamN").value)||0; fillTeamHost(); };
+  $("hTeamSave").onclick=()=>saveTeams();
+  $("hScoreReset").onclick=()=>resetScores();
   $("hNow").onchange=()=>saveConfig({nowOn:$("hNow").value||null},"진행 중 코너를 바꿨어요.");
 }
 
 /* ---------- boot ---------- */
-function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); }
+function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); }
 function failGate(msg){ $("gateNote").dataset.err=msg; $("gateNote").textContent=msg; $("liveText").textContent="연결 안 됨"; }
 async function boot(){
   drawPlan(); wire(); renderSchedule(); buildEntry(""); renderGate(); show("gateView");
@@ -660,6 +843,7 @@ async function boot(){
   fx.onValue(R("config"), s=>{ clearTimeout(timer); config=s.val()||{}; renderGate(); renderSchedule(); if(canEdit)fillHost();
       if(saved && !me && (isOpen()||canEdit)) enterLab(saved); },
     ()=>{ clearTimeout(timer); failGate("입장 정보를 읽을 수 없어요. 데이터베이스 규칙을 확인해 주세요."); });
+  fx.onValue(R("teams"), s=>{ teams = s.val()||{}; renderTeams(); }, ()=>{});
   fx.onValue(R("checkin"), s=>{ $("checkChip").hidden=false; $("checkN").textContent=s.size; }, ()=>{});
   fx.onValue(R("presence"), s=>{ presData = s.val()||{}; if(me) renderPeers(); }, ()=>{});
   fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists() && !claiming) becomeHost(); }, ()=>{});
