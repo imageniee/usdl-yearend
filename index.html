@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="2026 USDL 방송대상 송년회 가상 연구실. 입장 시간이 되면 캐릭터로 들어와 함께 돌아다녀요.">
+<meta property="og:title" content="USDL 가상 연구실 · 2026 USDL 방송대상">
+<meta property="og:description" content="송년회 당일, 링크를 열고 캐릭터로 입장하세요.">
+<meta name="theme-color" content="#0c1712">
+<title>USDL 가상 연구실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* page reset (the claude.ai viewer used to add this) */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+.hostfoot{margin-top:6px;font-size:13px;color:var(--muted)}
+.hostfoot summary{cursor:pointer;width:max-content}
+.hostfoot form{margin-top:8px}
+/* Layout: a night-shift architectural floor plan of the lab — gold linework on deep green, rooms tinted Christmas red/green, live avatars on top; side rail for room info, guestbook and host controls. */
+:root{
+  --bg:#0c1712; --paper:#112119; --paper2:#16291f; --line:#d8b56a; --line-dim:#7d6a40;
+  --red:#a8352b; --green:#3c7451; --ink:#f2ecdf; --muted:#9db0a3; --danger:#e0675c;
+  --display:"Black Han Sans","Malgun Gothic",sans-serif;
+  --body:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-bottom,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--line);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand h1{font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:.5px;margin:0;color:var(--line);text-wrap:balance}
+.brand small{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.08em}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-dim);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--ink);background:var(--paper)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.chip.live .dot{background:#5fd38a}
+.btn{white-space:nowrap;border:1px solid var(--line);background:transparent;border-radius:8px;padding:8px 14px;font-weight:500}
+.btn:hover{background:rgba(216,181,106,.12)}
+.btn.primary{background:var(--line);color:#1c1608;border-color:var(--line);font-weight:700}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.note{font-size:13px;color:var(--muted)}
+.banner{border:1px solid var(--line-dim);background:var(--paper);border-radius:10px;padding:10px 14px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{color:var(--line)}
+
+/* ---------- gate / ticket ---------- */
+.gate{display:grid;place-items:center;padding-block:28px}
+.ticket{width:min(640px,100%);display:grid;grid-template-columns:1fr auto;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.ticket .main{padding:26px 28px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ticket .stub{border-left:2px dashed var(--line-dim);padding:22px 18px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;gap:10px;background:var(--paper2);writing-mode:vertical-rl;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.ticket h2{font-family:var(--display);font-weight:400;font-size:40px;line-height:1.1;margin:0;color:var(--ink)}
+.ticket h2 em{font-style:normal;color:var(--line)}
+.tagline{color:var(--muted);margin:0}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;margin-top:4px}
+.meta dt{color:var(--muted);font-family:var(--mono);font-size:12px;padding-top:2px}
+.meta dd{margin:0}
+.count{display:flex;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums}
+.count div{background:var(--bg);border:1px solid var(--line-dim);border-radius:8px;padding:8px 10px;min-width:62px;text-align:center}
+.count b{display:block;font-family:var(--mono);font-size:24px;color:var(--line);font-weight:500}
+.count span{font-size:11px;color:var(--muted)}
+.gate-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+/* ---------- entry form ---------- */
+.entry{width:min(640px,100%);background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px 26px;display:flex;flex-direction:column;gap:14px}
+.entry h2{font-family:var(--display);font-weight:400;font-size:30px;margin:0;color:var(--line)}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+input[type=text],input[type=datetime-local],select,textarea{background:var(--bg);border:1px solid var(--line-dim);border-radius:8px;padding:9px 11px;color:var(--ink);width:100%}
+textarea{resize:vertical;min-height:70px}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:32px;height:32px;border-radius:50%;border:2px solid transparent}
+.sw[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg) inset}
+.pill{border:1px solid var(--line-dim);border-radius:999px;padding:5px 12px;background:transparent;font-size:13px}
+.pill[aria-pressed=true]{background:var(--line);color:#1c1608;border-color:var(--line);font-weight:700}
+
+/* ---------- lab ---------- */
+.lab{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;align-items:start}
+@media (max-width:900px){.lab{grid-template-columns:minmax(0,1fr)}}
+.mapbox{position:relative;width:100%;aspect-ratio:1000/640;background:var(--paper);border:1px solid var(--line-dim);border-radius:12px;overflow:hidden;touch-action:manipulation;user-select:none}
+.mapbox svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.layer{position:absolute;inset:0;pointer-events:none}
+.av{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;transition:left .22s linear,top .22s linear}
+.av.me{transition:none;z-index:3}
+.av .disc{width:34px;height:41px;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.av.me .disc{filter:drop-shadow(0 0 4px rgba(216,181,106,.95)) drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.charrow{display:flex;gap:14px;align-items:center;background:var(--bg);border:1px solid var(--line-dim);border-radius:12px;padding:12px 14px}
+.pvbig{width:64px;height:77px;flex:none;display:block}
+.chb{border:1px solid var(--line-dim);background:var(--bg);border-radius:10px;padding:6px 4px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--muted)}
+.chb .pv{width:40px;height:48px;display:block}
+.chb[aria-pressed=true]{border-color:var(--line);background:rgba(216,181,106,.14);color:var(--ink)}
+.av .nm{margin-top:3px;font-size:11px;line-height:1.2;background:rgba(12,23,18,.82);padding:1px 6px;border-radius:6px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+.av .bubble{position:absolute;bottom:calc(100% + 4px);background:var(--ink);color:#1b1b1b;font-size:12px;padding:4px 8px;border-radius:10px;max-width:180px;width:max-content;white-space:normal;line-height:1.3;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.av .emote{position:absolute;bottom:100%;font-size:22px;animation:floatup 1.8s ease-out forwards}
+@keyframes floatup{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:1;transform:translateY(-6px) scale(1.1)}100%{transform:translateY(-46px) scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.av{transition:none}.av .emote{animation:none}}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.toolbar form{display:flex;gap:6px;flex:1;min-width:220px}
+.emo{font-size:18px;width:40px;height:38px;border-radius:8px;border:1px solid var(--line-dim);background:var(--paper)}
+.emo:hover{background:var(--paper2)}
+.rail{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--paper);border:1px solid var(--line-dim);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{margin:0;font-family:var(--display);font-weight:400;font-size:20px;color:var(--line)}
+.card .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line-dim);background:transparent;border-radius:8px;padding:6px 12px;font-size:13px}
+.tab[aria-selected=true]{background:var(--line);color:#1c1608;border-color:var(--line);font-weight:700}
+.sched{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.sched li{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:6px 8px;border-radius:8px;font-size:14px}
+.sched li time{font-family:var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.sched li.on{background:rgba(216,181,106,.14)}
+.sched li.on time{color:var(--line)}
+.gb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto}
+.gb li{background:var(--bg);border:1px solid var(--line-dim);border-radius:10px;padding:8px 10px;font-size:14px;overflow-wrap:anywhere}
+.gb li .who{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:2px}
+.gb li .who i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.people{display:flex;flex-wrap:wrap;gap:6px}
+.people span{font-size:12px;border:1px solid var(--line-dim);border-radius:999px;padding:2px 8px;display:inline-flex;gap:5px;align-items:center}
+.people span i{width:8px;height:8px;border-radius:50%}
+.host{border-color:var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:13px;color:var(--muted);min-height:1.2em}
+.legend{font-family:var(--mono);font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>USDL 가상 연구실</h1><small>2026 USDL 방송대상 · 송년회</small></div>
+    <div class="spacer"></div>
+    <span class="chip" id="liveChip"><span class="dot"></span><span id="liveText">연결 중…</span></span>
+    <span class="chip" id="checkChip" hidden>입장 <b id="checkN">0</b>명</span>
+  </header>
+
+  <div class="banner" id="nowBanner" hidden><span>📺 지금 진행 중</span><b id="nowText"></b><span class="note" id="nowWhere"></span></div>
+
+  <!-- gate -->
+  <section class="gate" id="gateView">
+    <article class="ticket" aria-labelledby="tkTitle">
+      <div class="main">
+        <div class="eyebrow">방청권 · ADMIT ONE</div>
+        <h2 id="tkTitle">2026 USDL<br><em>방송대상</em></h2>
+        <p class="tagline">“올해도 연구보다 분량을 뽑았습니다.”</p>
+        <dl class="meta">
+          <dt>입장</dt><dd id="gateWhen">입장 시간은 호스트가 정하면 여기에 표시돼요</dd>
+          <dt>장소</dt><dd>USDL 가상 연구실 (이 페이지) · 현장 <span id="gatePlace">[장소]</span></dd>
+          <dt>상태</dt><dd id="gateState">입장 대기 중</dd>
+        </dl>
+        <div class="count" id="countBox" hidden>
+          <div><b id="cD">0</b><span>일</span></div><div><b id="cH">00</b><span>시간</span></div>
+          <div><b id="cM">00</b><span>분</span></div><div><b id="cS">00</b><span>초</span></div>
+        </div>
+        <div class="gate-actions">
+          <button class="btn primary" id="enterBtn" disabled>입장하기</button>
+          <button class="btn" id="previewBtn" hidden>호스트로 미리 들어가기</button>
+        </div>
+        <p class="note" id="gateNote">송년회 당일 입장 시간이 되면 버튼이 열려요. 이 페이지를 열어두면 자동으로 바뀝니다.</p>
+      </div>
+      <div class="stub"><span>NO. 2026-12</span><span>USDL TV</span></div>
+    </article>
+  </section>
+
+  <!-- entry -->
+  <section class="gate" id="entryView" hidden>
+    <form class="entry" id="entryForm">
+      <div class="eyebrow">입장 등록</div>
+      <h2>오늘 밤 이름표를 만들어 주세요</h2>
+      <label class="f" for="nick">본명 (다른 사람에게 이 이름으로 보여요)
+        <input type="text" id="nick" maxlength="12" placeholder="예) 홍길동" autocomplete="name" required>
+      </label>
+      <div class="charrow"><span class="pvbig" id="pvBig"></span><div style="min-width:0"><div class="eyebrow">내 캐릭터</div><div id="pvText" style="font-weight:700"></div><p class="note" style="margin:2px 0 0">소속에 따라 소품이, 연구실에 따라 옷 색이 정해져요.</p></div></div>
+      <div class="f"><span class="note">소속</span><div class="badges" id="badges"></div></div>
+      <div class="f"><span class="note" id="labLabel">지도교수님</span><div class="badges" id="labs"></div></div>
+      <div class="row"><button class="btn primary" type="submit" id="goBtn">연구실로 들어가기</button>
+        <span class="note">본명, 소속, 연구실은 이번 접속에서만 쓰여요.</span></div>
+    </form>
+  </section>
+
+  <!-- lab -->
+  <section class="lab" id="labView" hidden>
+    <div>
+      <div class="mapbox" id="map" tabindex="0" aria-label="연구실 평면도. 클릭하거나 방향키로 이동">
+        <svg id="plan" viewBox="0 0 1000 640" role="img" aria-label="USDL 가상 연구실 평면도"></svg>
+        <div class="layer" id="avLayer"></div>
+      </div>
+      <div class="toolbar">
+        <button class="emo" data-e="👏" aria-label="박수">👏</button>
+        <button class="emo" data-e="🎉" aria-label="축하">🎉</button>
+        <button class="emo" data-e="😂" aria-label="웃음">😂</button>
+        <button class="emo" data-e="❤️" aria-label="하트">❤️</button>
+        <button class="emo" data-e="🔥" aria-label="불꽃">🔥</button>
+        <form id="sayForm"><input type="text" id="sayInput" maxlength="40" placeholder="말풍선으로 한마디 (40자)" aria-label="말풍선">
+          <button class="btn small" type="submit">말하기</button></form>
+      </div>
+      <p class="legend">클릭(탭)한 곳으로 걸어가요 · 방향키/WASD로도 이동 · 방에 들어가면 오른쪽에 안내가 떠요</p>
+    </div>
+    <aside class="rail">
+      <div class="card" id="zoneCard">
+        <div class="kicker" id="zoneKicker">현재 위치</div>
+        <h3 id="zoneName">중정 홀</h3>
+        <p class="note" id="zoneDesc" style="margin:0"></p>
+      </div>
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" aria-selected="true" data-t="sched" id="tabSched">편성표</button>
+          <button class="tab" role="tab" aria-selected="false" data-t="gb" id="tabGb">방명록</button>
+          <button class="tab" role="tab" aria-selected="false" data-t="ppl" id="tabPpl">접속자</button>
+        </div>
+        <div id="pane-sched"><ul class="sched" id="schedList"></ul><p class="note" style="margin:4px 0 0">시간은 예시예요. 진행 중인 코너는 호스트가 표시해요.</p></div>
+        <div id="pane-gb" hidden>
+          <form id="gbForm" class="row" style="flex-direction:column;align-items:stretch">
+            <textarea id="gbText" maxlength="140" placeholder="올해 USDL에게 한마디 (140자)"></textarea>
+            <div class="row"><button class="btn small" type="submit" id="gbBtn">방명록 남기기</button><span class="status" id="gbStatus"></span></div>
+          </form>
+          <ul class="gb" id="gbList"></ul>
+        </div>
+        <div id="pane-ppl" hidden><div class="people" id="pplList"></div></div>
+      </div>
+      <div class="card host" id="hostCard" hidden>
+        <div class="kicker">호스트 전용</div>
+        <h3>진행 패널</h3>
+        <label class="f" for="hOpen">입장 시작 시각<input type="datetime-local" id="hOpen"></label>
+        <label class="f" for="hPlace">현장 장소<input type="text" id="hPlace" maxlength="40" placeholder="예) 39동 중정"></label>
+        <label class="f" for="hNow">지금 진행 중인 코너<select id="hNow"></select></label>
+        <div class="row">
+          <button class="btn small primary" id="hSave">저장</button>
+          <button class="btn small" id="hOpenNow">지금 바로 문 열기</button>
+          <button class="btn small" id="hClose">문 닫기</button>
+        </div>
+        <span class="status" id="hStatus"></span>
+      </div>
+    </aside>
+  </section>
+
+  <footer class="hostfoot" id="hostLogin">
+    <details>
+      <summary>진행자 로그인</summary>
+      <form id="hostForm" class="row">
+        <input type="password" id="hostKey" placeholder="진행자 비밀번호" autocomplete="off" aria-label="진행자 비밀번호" style="max-width:220px">
+        <button class="btn small" type="submit">확인</button>
+        <span class="status" id="hostLoginStatus"></span>
+      </form>
+    </details>
+  </footer>
+</div>
+
+<script src="firebase-config.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const W = 1000, H = 640;
+
+/* ---------- static data ---------- */
+const ZONES = [
+  {id:"stage", name:"메인 스테이지", kicker:"AWARDS · 21:30", x:300,y:30,w:400,h:140, fill:"rgba(216,181,106,.22)",
+   desc:"2026 USDL 방송대상 시상식. 특별상 7개와 정규상 7개, 그리고 대상은 사전 투표 + 당일 포인트로 정해져요."},
+  {id:"quiz", name:"1부 · 유에스디엘 퀴즈", kicker:"R-101 · 19:05", x:30,y:30,w:260,h:140, fill:"rgba(168,53,43,.30)",
+   desc:"내부자만 맞히는 워밍업 퀴즈. 정답 1문제당 +10점."},
+  {id:"crime", name:"2부 · 그것이 알고 싶다", kicker:"R-102 사건실 · 19:25", x:30,y:180,w:260,h:140, fill:"rgba(60,116,81,.30)",
+   desc:"익명 제보로 추적하는 연구실 미제사건. 냉장고 속 그것의 주인은 누구인가. 범인 지목 성공 +20점."},
+  {id:"blood", name:"3부 · 피의 연구실", kicker:"R-103 · 19:50", x:30,y:330,w:260,h:140, fill:"rgba(168,53,43,.30)",
+   desc:"포인트를 건 팀전·개인전 서바이벌. 비밀미션, 연합, 베팅, 익명투표."},
+  {id:"repo", name:"특별기획 · 현장 르포 상영관", kicker:"R-104 · 18:50", x:30,y:480,w:260,h:130, fill:"rgba(60,116,81,.22)",
+   desc:"카메라가 따라간 USDL의 평소 모습. 수업, 출근길, 퀵보드, 미팅 직전 첫 표정."},
+  {id:"mask", name:"4부 · 복면연구왕", kicker:"R-201 라운지 · 20:25", x:710,y:30,w:260,h:140, fill:"rgba(60,116,81,.30)",
+   desc:"익명 답변의 주인을 맞혀라. 맞히면 +15점, 끝까지 안 들키면 작성자 +15점."},
+  {id:"xres", name:"5부 · 환승연구", kicker:"R-202 카페 · 20:45", x:710,y:180,w:260,h:140, fill:"rgba(168,53,43,.30)",
+   desc:"당신의 연구는 안녕하십니까? 과거 연구주제(X-연구)의 주인을 맞히면 +15점."},
+  {id:"solo", name:"6부 · 나는 연구자", kicker:"R-203 미팅룸 · 21:05", x:710,y:330,w:260,h:140, fill:"rgba(60,116,81,.30)",
+   desc:"연구를 찾고 싶은 솔로 연구자들의 극사실주의 연구 프로그램. 연구 커플 성사 시 둘 다 +20점."},
+  {id:"guest", name:"포토월 · 방명록", kicker:"R-204", x:710,y:480,w:260,h:130, fill:"rgba(216,181,106,.14)",
+   desc:"올해 USDL에게 남기는 한마디. 오른쪽 방명록 탭에서 쓸 수 있어요."},
+  {id:"hall", name:"중정 홀", kicker:"OPENING · 18:30", x:300,y:180,w:400,h:430, fill:"rgba(255,255,255,.02)",
+   desc:"다과 테이블과 수다의 공간. 오프닝과 MC 등장도 여기서 시작해요."},
+];
+const PROGRAM = [
+  ["18:30","OPENING · 2026 USDL 연말특집","hall"],["18:50","특별기획 · 현장 르포","repo"],["19:05","1부 · 유에스디엘 퀴즈","quiz"],
+  ["19:25","2부 · 그것이 알고 싶다","crime"],["19:50","3부 · 피의 연구실","blood"],["20:25","4부 · 복면연구왕","mask"],
+  ["20:45","5부 · 환승연구","xres"],["21:05","6부 · 나는 연구자","solo"],["21:30","AWARDS · 2026 USDL 방송대상","stage"]];
+const BADGES = ["교수님","박사과정","석사과정","졸업생"];
+const LABS = [
+  {id:"kim", prof:"김세훈 교수님", short:"김세훈 교수님 연구실", color:"#c0392b"},
+  {id:"lee", prof:"이제승 교수님", short:"이제승 교수님 연구실", color:"#2e8b57"},
+  {id:"lim", prof:"임저스틴희준 교수님", short:"임저스틴희준 교수님 연구실", color:"#c9a227"}];
+const labOf = (id)=>LABS.find(l=>l.id===id)||null;
+const roleOf = (b)=>BADGES.includes(b)?b:"석사과정";
+/* Character = role prop (교수님 넥타이+안경 / 박사과정 비니 / 석사과정 헤드폰 / 졸업생 학사모) + lab color (outfit). */
+function charSVG(role,col){
+  const skin="#f3d2b0", hair="#3b2a21"; let front="", body="";
+  const hairP=`<path d="M9 19 Q9 8 20 8 Q31 8 31 19 Q26 13 20 14 Q13 14 9 19Z" fill="${hair}"/>`;
+  if(role==="교수님"){
+    body=`<path d="M14.5 33.5 L20 41 L25.5 33.5Z" fill="#fff"/><path d="M19 35.5 L21 35.5 L21.7 42.5 L20 44.5 L18.3 42.5Z" fill="#1d1d1d"/>`;
+    front=`<g fill="none" stroke="#1d1d1d" stroke-width="1.4"><circle cx="15.5" cy="21.5" r="3.4"/><circle cx="24.5" cy="21.5" r="3.4"/><path d="M18.9 21.5h2.2"/></g>`;
+  } else if(role==="박사과정"){
+    front=`<path d="M8.5 17 Q9 6 20 6 Q31 6 31.5 17Z" fill="#2f2f33"/><rect x="8" y="15" width="24" height="4" rx="2" fill="${col}"/><circle cx="20" cy="5" r="2.6" fill="#f2ecdf"/><path d="M13.5 24 Q15.5 25 17.5 24 M22.5 24 Q24.5 25 26.5 24" stroke="#b9869b" stroke-width=".9" fill="none"/>`;
+  } else if(role==="졸업생"){
+    front=`<path d="M6 10 L20 5 L34 10 L20 15Z" fill="#1d1d1d"/><rect x="13" y="11" width="14" height="4" fill="#1d1d1d"/><path d="M33 10 L33 17" stroke="#d8b56a" stroke-width="1.4"/><circle cx="33" cy="17.5" r="1.4" fill="#d8b56a"/>`;
+  } else {
+    front=`<path d="M8 21 Q8 7 20 7 Q32 7 32 21" fill="none" stroke="#2b2b2b" stroke-width="2.4"/><rect x="5.5" y="18" width="5" height="8" rx="2" fill="${col}" stroke="#2b2b2b"/><rect x="29.5" y="18" width="5" height="8" rx="2" fill="${col}" stroke="#2b2b2b"/>`;
+  }
+  return `<svg viewBox="0 0 40 48" width="100%" height="100%" aria-hidden="true"><ellipse cx="20" cy="41" rx="12" ry="8" fill="${col}"/>${body}<rect x="17" y="30" width="6" height="4" fill="${skin}"/><circle cx="20" cy="21" r="11" fill="${skin}"/>${hairP}<circle cx="15.5" cy="21.5" r="1.5" fill="#222"/><circle cx="24.5" cy="21.5" r="1.5" fill="#222"/><path d="M17.5 26 Q20 28 22.5 26" fill="none" stroke="#8a4b3a" stroke-width="1.2" stroke-linecap="round"/><circle cx="13" cy="25" r="1.6" fill="#f1a9a0" opacity=".7"/><circle cx="27" cy="25" r="1.6" fill="#f1a9a0" opacity=".7"/>${front}</svg>`;
+}
+const SPAWN = {x:500,y:585};
+
+/* ---------- floor plan ---------- */
+function drawPlan(){
+  const s = $("plan"), NS = "http://www.w3.org/2000/svg";
+  const el = (t,a,p=s)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+  const defs = el("defs",{});
+  const pat = el("pattern",{id:"grid",width:20,height:20,patternUnits:"userSpaceOnUse"},defs);
+  el("path",{d:"M20 0H0V20",fill:"none",stroke:"rgba(216,181,106,.07)","stroke-width":1},pat);
+  el("rect",{x:0,y:0,width:W,height:H,fill:"url(#grid)"});
+  el("rect",{x:20,y:20,width:960,height:600,fill:"none",stroke:"#d8b56a","stroke-width":4});
+  for(const z of ZONES){
+    el("rect",{x:z.x,y:z.y,width:z.w,height:z.h,fill:z.fill,stroke:"#d8b56a","stroke-width":z.id==="hall"?1:2,"stroke-dasharray":z.id==="hall"?"4 6":"none"});
+    if(z.id!=="hall"){
+      const t=el("text",{x:z.x+12,y:z.y+22,fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":11});t.textContent=z.kicker;
+      const n=el("text",{x:z.x+12,y:z.y+48,fill:"#f2ecdf","font-family":"Black Han Sans, sans-serif","font-size":z.id==="stage"?26:19});n.textContent=z.name;
+    }
+  }
+  // doors (gaps in walls drawn as gold door swings)
+  const doors=[[290,100],[290,250],[290,400],[290,545],[710,100],[710,250],[710,400],[710,545]];
+  for(const [x,y] of doors){el("rect",{x:x-3,y:y-18,width:16,height:36,fill:"#112119"});el("path",{d:`M${x+5} ${y-18} A36 36 0 0 ${x<500?1:0} ${x<500?x+41:x-31} ${y+18}`,fill:"none",stroke:"#7d6a40","stroke-width":1});}
+  el("rect",{x:470,y:166,width:60,height:8,fill:"#112119"});
+  // stage furniture
+  el("rect",{x:420,y:60,width:160,height:46,rx:6,fill:"rgba(216,181,106,.25)",stroke:"#d8b56a"});
+  const st=el("text",{x:500,y:89,"text-anchor":"middle",fill:"#d8b56a","font-family":"IBM Plex Mono, monospace","font-size":12});st.textContent="PODIUM · 트로피";
+  // hall furniture: snack table + seats
+  el("circle",{cx:500,cy:330,r:46,fill:"rgba(216,181,106,.10)",stroke:"#7d6a40","stroke-dasharray":"3 4"});
+  const sn=el("text",{x:500,y:334,"text-anchor":"middle",fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":11});sn.textContent="다과 테이블";
+  for(let i=0;i<10;i++){const a=i/10*Math.PI*2;el("circle",{cx:500+Math.cos(a)*66,cy:330+Math.sin(a)*66,r:6,fill:"none",stroke:"#7d6a40"});}
+  const hl=el("text",{x:320,y:205,fill:"#f2ecdf","font-family":"Black Han Sans, sans-serif","font-size":19});hl.textContent="중정 홀";
+  const hk=el("text",{x:320,y:224,fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":11});hk.textContent="OPENING · 18:30";
+  // fridge in 사건실
+  el("rect",{x:238,y:258,width:36,height:52,rx:3,fill:"rgba(242,236,223,.10)",stroke:"#f2ecdf","stroke-width":1});
+  const fr=el("text",{x:256,y:322,"text-anchor":"middle",fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":10});fr.textContent="냉장고 ?";
+  // screen in 르포
+  el("rect",{x:60,y:545,width:120,height:8,fill:"#f2ecdf",opacity:.6});
+  // photo wall
+  for(let i=0;i<4;i++)el("rect",{x:735+i*56,y:550,width:44,height:34,fill:"none",stroke:"#7d6a40","stroke-dasharray":"2 3"});
+  // entrance
+  el("rect",{x:455,y:612,width:90,height:12,fill:"#0c1712"});
+  const en=el("text",{x:500,y:603,"text-anchor":"middle",fill:"#d8b56a","font-family":"IBM Plex Mono, monospace","font-size":11});en.textContent="ENTRANCE ▲";
+  // north arrow + scale bar (plan conventions)
+  const g=el("g",{transform:"translate(660 560)"});
+  el("path",{d:"M0 -22 L8 6 L0 0 L-8 6 Z",fill:"#d8b56a"},g);
+  const nt=el("text",{x:0,y:-26,"text-anchor":"middle",fill:"#d8b56a","font-family":"IBM Plex Mono, monospace","font-size":11},g);nt.textContent="N";
+  const sb=el("g",{transform:"translate(320 588)"});
+  [0,1,2].forEach(i=>el("rect",{x:i*40,y:0,width:40,height:6,fill:i%2?"none":"#d8b56a",stroke:"#d8b56a"},sb));
+  [["0",0],["5",80],["10m",120]].forEach(([t,x])=>{const e=el("text",{x,y:20,"text-anchor":"middle",fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":10},sb);e.textContent=t;});
+  const ttl=el("text",{x:968,y:612,"text-anchor":"end",fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":10});ttl.textContent="USDL LAB · 1F PLAN · 1:100";
+}
+
+/* ---------- state ---------- */
+let fx=null, uid=null, canEdit=false, presData={}, serverOffset=0;
+const R=(p)=>fx.ref(fx.db,p);
+function pres(patch){ if(!fx||!uid) return Promise.resolve(); return fx.update(R("presence/"+uid),{...patch,t:fx.serverTimestamp()}).catch(()=>{}); }
+function armPresence(){ if(fx&&uid) fx.onDisconnect(R("presence/"+uid)).remove().catch(()=>{}); }
+let config = {};            // config/event
+let me = null;              // {name,color,badge,x,y}
+let target = null, keys = new Set(), lastSent = 0;
+const peerSeen = new Map(); // peer -> {sayAt, emoteAt}
+const ssGet=(k)=>{try{return sessionStorage.getItem(k)}catch(e){return null}};
+const ssSet=(k,v)=>{try{sessionStorage.setItem(k,v)}catch(e){}};
+const zoneAt=(x,y)=>{for(const z of ZONES){if(z.id!=="hall"&&x>=z.x&&x<=z.x+z.w&&y>=z.y&&y<=z.y+z.h)return z;}return ZONES.find(z=>z.id==="hall");};
+
+/* ---------- gate ---------- */
+function openTime(){ return config.openAt ? new Date(config.openAt) : null; }
+function isOpen(){
+  if (config.closed) return false;
+  if (config.forceOpen) return true;
+  const t = openTime(); return !!(t && Date.now() >= t.getTime());
+}
+function fmtWhen(d){
+  const w="일월화수목금토"[d.getDay()];
+  return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()} (${w}) ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+function renderGate(){
+  const t = openTime(), open = isOpen();
+  $("gatePlace").textContent = config.place || "[장소]";
+  $("gateWhen").textContent = t ? fmtWhen(t) : "입장 시간은 호스트가 정하면 여기에 표시돼요";
+  $("enterBtn").disabled = !open;
+  $("gateState").textContent = open ? "입장 가능 · 문이 열렸어요" : (config.closed ? "호스트가 문을 닫았어요" : "입장 대기 중");
+  $("gateNote").textContent = open ? "입장하기를 누르고 이름표를 만들면 바로 연구실로 들어가요."
+    : (fx ? "송년회 당일 입장 시간이 되면 버튼이 열려요. 이 페이지를 열어두면 자동으로 바뀝니다."
+          : ($("gateNote").dataset.err || "연결 중이에요…"));
+  const cb=$("countBox");
+  if (t && !open && !config.closed){
+    cb.hidden=false; let ms=Math.max(0,t.getTime()-Date.now());
+    const d=Math.floor(ms/864e5); ms-=d*864e5; const h=Math.floor(ms/36e5); ms-=h*36e5; const m=Math.floor(ms/6e4); ms-=m*6e4; const s=Math.floor(ms/1e3);
+    $("cD").textContent=d; $("cH").textContent=String(h).padStart(2,"0"); $("cM").textContent=String(m).padStart(2,"0"); $("cS").textContent=String(s).padStart(2,"0");
+  } else cb.hidden=true;
+}
+function show(view){ for(const v of ["gateView","entryView","labView"]) $(v).hidden = v!==view; }
+
+/* ---------- entry ---------- */
+let pick = {badge:BADGES[2], lab:LABS[0].id};
+function pillRow(box, items, cur, onPick){
+  box.textContent="";
+  for(const it of items){
+    const b=document.createElement("button"); b.type="button"; b.className="pill"; b.setAttribute("aria-pressed",String(it.id===cur));
+    if(it.color){const dot=document.createElement("i");dot.style.cssText="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:"+it.color;b.append(dot);}
+    b.append(document.createTextNode(it.label)); b.onclick=()=>onPick(it.id); box.appendChild(b);
+  }
+}
+function renderEntry(){
+  const lab=labOf(pick.lab);
+  pillRow($("badges"), BADGES.map(b=>({id:b,label:b})), pick.badge, id=>{pick.badge=id; renderEntry();});
+  $("labLabel").textContent = pick.badge==="교수님" ? "어느 교수님이세요?" : "지도교수님";
+  pillRow($("labs"), LABS.map(l=>({id:l.id,label:l.prof,color:l.color})), pick.lab, id=>{pick.lab=id; renderEntry();});
+  $("pvBig").innerHTML = charSVG(pick.badge, lab.color);
+  $("pvText").textContent = pick.badge==="교수님" ? lab.prof : `${pick.badge} · ${lab.short}`;
+}
+function buildEntry(defaultName){
+  renderEntry();
+  if(defaultName && !$("nick").value) $("nick").value = defaultName.slice(0,12);
+}
+async function enterLab(prof){
+  me = {...prof, x:SPAWN.x, y:SPAWN.y};
+  ssSet("usdl-me3", JSON.stringify(prof));
+  show("labView");
+  armPresence();
+  sendPresence(true);
+  renderAll();
+  $("map").focus({preventScroll:true});
+  if (fx && uid){
+    try { await fx.set(R("checkin/"+uid),{alias:prof.name, color:prof.color, badge:prof.badge, lab:prof.lab||null, at:new Date().toISOString()}); } catch(e){}
+  }
+}
+
+/* ---------- presence / room ---------- */
+function sendPresence(force){
+  if(!fx||!me) return;
+  const now=performance.now(); if(!force && now-lastSent<150) return; lastSent=now;
+  pres({name:me.name,color:me.color,badge:me.badge,lab:me.lab||null,x:Math.round(me.x),y:Math.round(me.y),zone:zoneAt(me.x,me.y).id});
+}
+function say(text){
+  if(!me) return; const t=text.trim().slice(0,40); if(!t) return;
+  me.say=t; me.sayAt=Date.now(); pres({say:t,sayAt:me.sayAt}); renderAll();
+}
+function emote(e){
+  if(!me) return; me.emote=e; me.emoteAt=Date.now(); pres({emote:e,emoteAt:me.emoteAt}); popEmote("me",e);
+}
+
+/* ---------- rendering ---------- */
+const avEls = new Map();
+function avatarEl(key){
+  let a=avEls.get(key); if(a) return a;
+  a=document.createElement("div"); a.className="av"+(key==="me"?" me":"");
+  const d=document.createElement("div"); d.className="disc"; const n=document.createElement("div"); n.className="nm";
+  a.append(d,n); $("avLayer").appendChild(a); avEls.set(key,a); return a;
+}
+function placeAv(a,p,label){
+  a.style.left=(p.x/W*100)+"%"; a.style.top=(p.y/H*100)+"%";
+  const d=a.querySelector(".disc");
+  const col=typeof p.color==="string"&&/^#[0-9a-f]{6}$/i.test(p.color)?p.color:"#777777";
+  const lab=labOf(p.lab), role=roleOf(p.badge), c2=lab?lab.color:col;
+  if(d.dataset.k!==role+c2){ d.dataset.k=role+c2; d.innerHTML=charSVG(role,c2); }
+  a.querySelector(".nm").textContent=label;
+}
+function showBubble(a,text){
+  let b=a.querySelector(".bubble"); if(!b){b=document.createElement("div");b.className="bubble";a.appendChild(b);}
+  b.textContent=text; clearTimeout(b._t); b._t=setTimeout(()=>b.remove(),8000);
+}
+function popEmote(key,e){
+  const a=avEls.get(key); if(!a) return; const s=document.createElement("div"); s.className="emote"; s.textContent=String(e).slice(0,4);
+  a.appendChild(s); setTimeout(()=>s.remove(),1900);
+}
+function validNum(v,lo,hi){return typeof v==="number"&&isFinite(v)?Math.min(hi,Math.max(lo,v)):null;}
+function renderPeers(){
+  const nowMs=Date.now();
+  const peers = fx ? Object.entries(presData).map(([id,pr])=>({peer:id,sameTab:id===uid,kind:"viewer",guest:false,presence:(pr&&typeof pr==="object")?pr:{},
+      updatedAt:(pr&&typeof pr.t==="number")?pr.t-serverOffset:nowMs})).filter(p=>nowMs-p.updatedAt<10*60*1000) : [];
+  const live = new Set(["me"]);
+  for(const p of peers){
+    if(p.sameTab || p.kind!=="viewer") continue;
+    const pr=p.presence||{}; const x=validNum(pr.x,20,980), y=validNum(pr.y,20,620);
+    if(x===null||y===null) continue;
+    live.add(p.peer);
+    const a=avatarEl(p.peer);
+    placeAv(a,{x,y,color:pr.color,name:pr.name,badge:pr.badge,lab:pr.lab},String(pr.name||"참가자").slice(0,12)+(p.guest?" · 게스트":""));
+    a.style.opacity = (Date.now()-p.updatedAt>120000)?.5:1;
+    const seen=peerSeen.get(p.peer)||{};
+    if(pr.sayAt && pr.sayAt!==seen.sayAt && typeof pr.say==="string"){ if(seen.sayAt!==undefined||Date.now()-p.updatedAt<8000) showBubble(a,pr.say.slice(0,40)); seen.sayAt=pr.sayAt; }
+    if(pr.emoteAt && pr.emoteAt!==seen.emoteAt && typeof pr.emote==="string"){ if(seen.emoteAt!==undefined) popEmote(p.peer,pr.emote); seen.emoteAt=pr.emoteAt; }
+    peerSeen.set(p.peer,seen);
+  }
+  for(const [k,a] of avEls){ if(!live.has(k)){a.remove();avEls.delete(k);peerSeen.delete(k);} }
+  // people list
+  const list=$("pplList"); list.textContent="";
+  const people=[];
+  const tag=(b,l)=>{const L=labOf(l); return (roleOf(b)==="교수님"?"교수님":roleOf(b))+(L&&roleOf(b)!=="교수님"?" · "+L.prof.replace(" 교수님","")+"랩":"");};
+  if(me) people.push({name:me.name+" (나)",color:me.color,zone:tag(me.badge,me.lab)});
+  for(const p of peers){ if(p.sameTab||p.kind!=="viewer") continue; const pr=p.presence||{}; if(!pr.name) continue;
+    const L=labOf(pr.lab); people.push({name:String(pr.name).slice(0,12),color:L?L.color:pr.color,zone:tag(pr.badge,pr.lab)}); }
+  for(const pp of people){const s=document.createElement("span");const i=document.createElement("i");i.style.background=/^#[0-9a-f]{6}$/i.test(pp.color||"")?pp.color:"#777";s.append(i,document.createTextNode(pp.name+(pp.zone?" · "+pp.zone:"")));list.appendChild(s);}
+  if(!people.length){const s=document.createElement("span");s.textContent="아직 아무도 없어요";list.appendChild(s);}
+  $("liveText").textContent = fx ? `지금 ${Math.max(people.length,1)}명 접속` : "혼자 보는 중";
+}
+let lastZone=null;
+function renderMe(){
+  if(!me) return; const a=avatarEl("me"); placeAv(a,me,me.name+" (나)");
+  const z=zoneAt(me.x,me.y);
+  if(z.id!==lastZone){ lastZone=z.id; $("zoneKicker").textContent=z.kicker; $("zoneName").textContent=z.name; $("zoneDesc").textContent=z.desc;
+    if(z.id==="guest") selectTab("gb"); }
+}
+function renderAll(){ renderMe(); renderPeers(); if(me && me.say && Date.now()-me.sayAt<8000){ const a=avEls.get("me"); if(a && !a.querySelector(".bubble")) showBubble(a,me.say); } }
+function renderSchedule(){
+  const ul=$("schedList"); ul.textContent="";
+  for(const [t,n,z] of PROGRAM){const li=document.createElement("li");if(config.nowOn===z)li.className="on";const tm=document.createElement("time");tm.textContent=t;const s=document.createElement("span");s.textContent=n;li.append(tm,s);ul.appendChild(li);}
+  const now=PROGRAM.find(p=>p[2]===config.nowOn);
+  $("nowBanner").hidden=!now; if(now){$("nowText").textContent=now[1];$("nowWhere").textContent="· "+(ZONES.find(z=>z.id===now[2])||{}).name+"로 모여주세요";}
+}
+
+/* ---------- movement ---------- */
+function mapPoint(ev){
+  const r=$("map").getBoundingClientRect(); return {x:(ev.clientX-r.left)/r.width*W, y:(ev.clientY-r.top)/r.height*H};
+}
+let lastT=performance.now();
+function tick(t){
+  const dt=Math.min(.05,(t-lastT)/1000); lastT=t;
+  if(me){
+    let vx=0,vy=0; const sp=240;
+    if(keys.has("ArrowLeft")||keys.has("a"))vx-=1; if(keys.has("ArrowRight")||keys.has("d"))vx+=1;
+    if(keys.has("ArrowUp")||keys.has("w"))vy-=1; if(keys.has("ArrowDown")||keys.has("s"))vy+=1;
+    let moved=false;
+    if(vx||vy){ const l=Math.hypot(vx,vy); me.x+=vx/l*sp*dt; me.y+=vy/l*sp*dt; target=null; moved=true; }
+    else if(target){ const dx=target.x-me.x, dy=target.y-me.y, d=Math.hypot(dx,dy);
+      if(d<3){me.x=target.x;me.y=target.y;target=null;} else {const s=Math.min(d,sp*dt); me.x+=dx/d*s; me.y+=dy/d*s;} moved=true; }
+    if(moved){ me.x=Math.min(968,Math.max(32,me.x)); me.y=Math.min(608,Math.max(32,me.y)); renderMe(); sendPresence(!target && !(vx||vy)); }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------- guestbook ---------- */
+let gbUnsub=null;
+function startGuestbook(){
+  if(!fx){ $("gbStatus").textContent="방명록을 불러올 수 없어요."; $("gbBtn").disabled=true; return; }
+  const timer=setTimeout(()=>{$("gbStatus").textContent="방명록을 아직 불러오지 못했어요.";},10000);
+  gbUnsub=fx.onValue(fx.query(R("guestbook"),fx.orderByChild("at"),fx.limitToLast(200)),raw=>{
+    const docs=[]; raw.forEach(c=>{const v=c.val(); docs.push({id:c.key,data:()=>v});}); docs.reverse();
+    const snap={docs,empty:!docs.length};
+    clearTimeout(timer); if($("gbStatus").textContent.startsWith("방명록을 아직"))$("gbStatus").textContent="";
+    const ul=$("gbList"); ul.textContent="";
+    if(snap.empty){const li=document.createElement("li");li.textContent="첫 번째 한마디를 남겨 주세요.";ul.appendChild(li);}
+    for(const d of snap.docs){const v=d.data()||{};const li=document.createElement("li");const w=document.createElement("div");w.className="who";const i=document.createElement("i");
+      i.style.background=/^#[0-9a-f]{6}$/i.test(v.color||"")?v.color:"#777";const nm=document.createElement("span");const GL=labOf(v.lab); nm.textContent=String(v.alias||"익명").slice(0,12)+(v.badge?" · "+String(v.badge).slice(0,8):"")+(GL&&v.badge!=="교수님"?" · "+GL.prof.replace(" 교수님","")+"랩":"");
+      w.append(i,nm);const p=document.createElement("div");p.textContent=String(v.text||"").slice(0,140);li.append(w,p);ul.appendChild(li);
+      if(d.id===uid && !$("gbText").value && document.activeElement!==$("gbText")){$("gbText").value=String(v.text||"");$("gbBtn").textContent="방명록 고치기";}}
+  },err=>{clearTimeout(timer);$("gbStatus").textContent="방명록 연결이 끊겼어요. 새로고침해 주세요.";});
+}
+async function saveGuestbook(ev){
+  ev.preventDefault(); const text=$("gbText").value.trim().slice(0,140);
+  if(!text){$("gbStatus").textContent="내용을 적어 주세요.";return;}
+  if(!fx||!uid){$("gbStatus").textContent="아직 연결되지 않았어요. 잠시 후 다시 눌러 주세요.";return;}
+  $("gbBtn").disabled=true; $("gbStatus").textContent="저장 중…";
+  try{ await fx.set(R("guestbook/"+uid),{alias:me?me.name:"익명",color:me?me.color:"#777",badge:me?me.badge:"",lab:me?me.lab||null:null,text,at:new Date().toISOString()});
+    $("gbStatus").textContent="남겼어요."; $("gbBtn").textContent="방명록 고치기"; }
+  catch(e){ $("gbStatus").textContent = "저장하지 못했어요. 잠시 후 다시 눌러 주세요."; }
+  $("gbBtn").disabled=false;
+}
+
+/* ---------- host ---------- */
+function toLocalInput(iso){ if(!iso) return ""; const d=new Date(iso); const p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function fillHost(){
+  const sel=$("hNow"); if(!sel.options.length){ const o=document.createElement("option");o.value="";o.textContent="표시 안 함";sel.appendChild(o);
+    for(const [t,n,z] of PROGRAM){const op=document.createElement("option");op.value=z;op.textContent=t+" "+n;sel.appendChild(op);} }
+  if(document.activeElement!==$("hOpen")) $("hOpen").value=toLocalInput(config.openAt);
+  if(document.activeElement!==$("hPlace")) $("hPlace").value=config.place||"";
+  sel.value=config.nowOn||"";
+}
+async function saveConfig(patch,msg){
+  if(!fx) return; $("hStatus").textContent="저장 중…";
+  const next={openAt:config.openAt||null,place:config.place||"",nowOn:config.nowOn||null,forceOpen:!!config.forceOpen,closed:!!config.closed,...patch};
+  try{ await fx.set(R("config"),next); $("hStatus").textContent=msg||"저장했어요."; }
+  catch(e){ $("hStatus").textContent="저장하지 못했어요. 진행자 비밀번호를 다시 확인해 주세요."; }
+}
+
+/* ---------- wiring ---------- */
+function selectTab(t){ for(const b of document.querySelectorAll(".tab")){b.setAttribute("aria-selected",String(b.dataset.t===t));} for(const p of ["sched","gb","ppl"]) $("pane-"+p).hidden=p!==t; }
+function wire(){
+  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>selectTab(b.dataset.t));
+  $("enterBtn").onclick=()=>{ show("entryView"); $("nick").focus(); };
+  $("previewBtn").onclick=()=>{ show("entryView"); $("nick").focus(); };
+  $("entryForm").onsubmit=(e)=>{ e.preventDefault(); const n=$("nick").value.trim().slice(0,12); if(!n){$("nick").focus();return;} enterLab({name:n,color:labOf(pick.lab).color,badge:pick.badge,lab:pick.lab}); };
+  $("map").addEventListener("pointerdown",e=>{ if(!me) return; const p=mapPoint(e); target={x:p.x,y:p.y}; });
+  $("map").addEventListener("keydown",e=>{ const k=e.key.length===1?e.key.toLowerCase():e.key; if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","w","a","s","d"].includes(k)){keys.add(k);e.preventDefault();} });
+  $("map").addEventListener("keyup",e=>{ const k=e.key.length===1?e.key.toLowerCase():e.key; keys.delete(k); sendPresence(true); });
+  $("map").addEventListener("blur",()=>keys.clear());
+  document.querySelectorAll(".emo").forEach(b=>b.onclick=()=>emote(b.dataset.e));
+  $("sayForm").onsubmit=e=>{e.preventDefault(); say($("sayInput").value); $("sayInput").value="";};
+  $("gbForm").onsubmit=saveGuestbook;
+  $("hSave").onclick=()=>{ const v=$("hOpen").value; saveConfig({openAt:v?new Date(v).toISOString():null,place:$("hPlace").value.trim().slice(0,40),nowOn:$("hNow").value||null}); };
+  $("hOpenNow").onclick=()=>saveConfig({forceOpen:true,closed:false},"문을 열었어요. 대기 중인 사람들도 바로 입장할 수 있어요.");
+  $("hClose").onclick=()=>saveConfig({forceOpen:false,closed:true},"문을 닫았어요. 이미 들어온 사람은 그대로 있어요.");
+  $("hostForm").onsubmit=async(e)=>{ e.preventDefault(); const k=$("hostKey").value; if(!k||!fx||!uid){ $("hostLoginStatus").textContent="연결된 뒤에 다시 시도해 주세요."; return; }
+    $("hostLoginStatus").textContent="확인 중…";
+    try{ await fx.set(R("hostClaims/"+uid),k); $("hostKey").value=""; becomeHost(); $("hostLoginStatus").textContent=""; }
+    catch(err){ $("hostLoginStatus").textContent="비밀번호가 맞지 않아요."; } };
+  $("hNow").onchange=()=>saveConfig({nowOn:$("hNow").value||null},"진행 중 코너를 바꿨어요.");
+}
+
+/* ---------- boot ---------- */
+function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); }
+function failGate(msg){ $("gateNote").dataset.err=msg; $("gateNote").textContent=msg; $("liveText").textContent="연결 안 됨"; }
+async function boot(){
+  drawPlan(); wire(); renderSchedule(); buildEntry(""); renderGate(); show("gateView");
+  setInterval(()=>{ if(!$("gateView").hidden) renderGate(); },1000);
+  setInterval(()=>{ if(me) renderPeers(); },5000);
+  setInterval(()=>{ if(me) pres({}); },60000);
+  requestAnimationFrame(tick);
+  const saved=(()=>{try{return JSON.parse(ssGet("usdl-me3")||"null")}catch(e){return null}})();
+
+  const cfg = window.USDL_FIREBASE_CONFIG;
+  if(!cfg || !cfg.apiKey || String(cfg.apiKey).includes("붙여") || !cfg.databaseURL){
+    failGate("Firebase 설정이 아직 없어요. firebase-config.js에 설정값을 넣어 주세요."); return; }
+  try{
+    const V="https://www.gstatic.com/firebasejs/10.12.2/";
+    const [appM,authM,dbM] = await Promise.all([import(V+"firebase-app.js"),import(V+"firebase-auth.js"),import(V+"firebase-database.js")]);
+    const app = appM.initializeApp(cfg);
+    const cred = await authM.signInAnonymously(authM.getAuth(app));
+    uid = cred.user.uid;
+    fx = {...dbM, db: dbM.getDatabase(app)};
+  }catch(e){ console.error(e); failGate("가상 연구실에 연결하지 못했어요. 새로고침해 주세요."); return; }
+
+  fx.onValue(R(".info/serverTimeOffset"), s=>{ serverOffset = s.val()||0; });
+  fx.onValue(R(".info/connected"), s=>{ const c=!!s.val(); $("liveChip").classList.toggle("live",c); if(c&&me){ armPresence(); sendPresence(true); } });
+  const timer=setTimeout(()=>{ $("gateNote").textContent="입장 정보를 아직 불러오지 못했어요. 잠시만 기다려 주세요."; },10000);
+  fx.onValue(R("config"), s=>{ clearTimeout(timer); config=s.val()||{}; renderGate(); renderSchedule(); if(canEdit)fillHost();
+      if(saved && !me && (isOpen()||canEdit)) enterLab(saved); },
+    ()=>{ clearTimeout(timer); failGate("입장 정보를 읽을 수 없어요. 데이터베이스 규칙을 확인해 주세요."); });
+  fx.onValue(R("checkin"), s=>{ $("checkChip").hidden=false; $("checkN").textContent=s.size; }, ()=>{});
+  fx.onValue(R("presence"), s=>{ presData = s.val()||{}; if(me) renderPeers(); }, ()=>{});
+  fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists()) becomeHost(); }, ()=>{});
+  startGuestbook();
+  renderGate();
+}
+boot();
+})();
+</script>
+
+</body>
+</html>
