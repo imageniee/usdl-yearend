@@ -163,6 +163,18 @@ textarea{resize:vertical;min-height:70px}
 .hrow.p{grid-template-columns:1fr}
 .hrow.p .btns{justify-content:flex-start}
 .mypts{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.solo-dim{display:grid;gap:4px;padding:8px 0;border-top:1px solid rgba(216,181,106,.15)}
+.solo-dim b{font-size:13px}
+.solo-dim .sub{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.solo-dim .sub small{min-width:64px;color:var(--muted);font-size:12px}
+.solo-dim .pill{padding:4px 10px;font-size:13px}
+.solo-res{font-size:20px;font-weight:700;margin:4px 0}
+.solo-res .pct{font-family:var(--mono);color:#ff8fb3}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.chips span{border:1px solid rgba(255,143,179,.5);border-radius:999px;padding:2px 8px;font-size:12px}
+.mrow{display:grid;grid-template-columns:clamp(40px,6vw,70px) 1fr auto;gap:16px;align-items:center;font-size:clamp(18px,3vw,34px)}
+.mrow .rk{font-family:var(--mono);color:var(--muted);text-align:right}
+.mrow .pt{font-family:var(--mono);color:#ff8fb3}
 .bump{animation:bump .6s ease-out}
 @keyframes bump{0%{transform:scale(1)}30%{transform:scale(1.35);color:var(--line)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.bump{animation:none}.srow .bar,.brow .bar{transition:none}}
@@ -252,6 +264,12 @@ textarea{resize:vertical;min-height:70px}
         <div class="scorelist" id="pTop"></div>
         <div class="row"><button class="btn small" id="bigBoardBtn2" type="button">점수판 크게 보기</button></div>
       </div>
+      <div class="card" id="soloCard" hidden>
+        <div class="kicker">💕 나는 연구자 · R-202 미팅룸</div>
+        <h3 id="soloTitle">내 연구 성향 고르기</h3>
+        <div id="soloBody"></div>
+        <span class="status" id="soloStatus"></span>
+      </div>
       <div class="card" id="teamCard" hidden>
         <div class="kicker">팀 대항전</div>
         <h3 id="myTeamName">우리 팀</h3>
@@ -310,6 +328,20 @@ textarea{resize:vertical;min-height:70px}
         <div id="hPScore" class="pscroll"></div>
         <div class="row"><button class="btn small" id="hPReset" type="button">개인 점수 0으로</button></div>
         <span class="status" id="hPStatus"></span>
+        <div class="kicker" style="margin-top:12px">💕 나는 연구자 매칭</div>
+        <p class="note" style="margin:4px 0" id="hSoloInfo">참여 0명</p>
+        <div class="row">
+          <button class="btn small" id="hSoloOpen" type="button">성향 받기 시작</button>
+          <button class="btn small primary" id="hSoloRun" type="button">매칭 계산</button>
+          <button class="btn small" id="hSoloReveal" type="button">결과 공개</button>
+        </div>
+        <div class="row">
+          <button class="btn small" id="hSoloBig" type="button">매칭 결과 크게 보기</button>
+          <button class="btn small" id="hSoloBest" type="button">궁합 1위 둘 다 +20</button>
+          <button class="btn small" id="hSoloReset" type="button">매칭 초기화</button>
+        </div>
+        <div id="hSoloPreview" class="scorelist"></div>
+        <span class="status" id="hSoloStatus"></span>
       </div>
     </aside>
   </section>
@@ -334,6 +366,11 @@ textarea{resize:vertical;min-height:70px}
   </div>
   <button class="btn" id="bigClose" type="button">닫기</button>
 </div>
+<div class="bigboard" id="matchBoard" hidden>
+  <h2>💕 나는 연구자 · 매칭 결과</h2>
+  <div class="biglist" id="matchList"></div>
+  <button class="btn" id="matchClose" type="button">닫기</button>
+</div>
 <script src="firebase-config.js"></script>
 <script>
 (() => {
@@ -356,7 +393,7 @@ const ZONES = [
   {id:"xres", name:"환승연구", kicker:"R-201 카페 · 19:40", x:710,y:30,w:260,h:140, fill:"rgba(168,53,43,.30)",
    desc:"과거의 연구를 떠나 새로운 연구를 만난 연구자들. 이름을 가린 X-연구의 주인을 맞히면 +15점."},
   {id:"solo", name:"나는 연구자", kicker:"R-202 미팅룸 · 20:00", x:710,y:180,w:260,h:140, fill:"rgba(60,116,81,.30)",
-   desc:"연구를 찾고 싶은 솔로 연구자들의 극사실주의 연구 프로그램. 연구 커플 성사 시 둘 다 +20점."},
+   desc:"연구를 찾고 싶은 솔로 연구자들의 극사실주의 연구 프로그램. 오른쪽 ‘나는 연구자’ 카드에서 내 성향과 원하는 성향을 고르면 가장 잘 맞는 사람끼리 매칭돼요."},
   {id:"photo", name:"단체사진 포토존", kicker:"R-203 · 21:20", x:710,y:330,w:260,h:140, fill:"rgba(168,53,43,.22)",
    desc:"21:20 단체사진! 2027년에도 USDL은 계속됩니다."},
   {id:"geum", name:"금쪽상담소", kicker:"R-204 상담실 · 20:30", x:710,y:480,w:260,h:130, fill:"rgba(216,181,106,.14)",
@@ -534,7 +571,7 @@ async function enterLab(prof){
   me = {...prof, x:SPAWN.x, y:SPAWN.y};
   ssSet("usdl-me3", JSON.stringify(prof));
   show("labView");
-  renderTeams(); renderPersonal(); setTimeout(goTeam, 400);
+  renderTeams(); renderPersonal(); renderSolo(); setTimeout(goTeam, 400);
   armPresence();
   sendPresence(true);
   renderAll();
@@ -620,7 +657,8 @@ function renderMe(){
   if(!me) return; const a=avatarEl("me"); placeAv(a,me,me.name+" (나)");
   const z=zoneAt(me.x,me.y);
   if(z.id!==lastZone){ lastZone=z.id; $("zoneKicker").textContent=z.kicker; $("zoneName").textContent=z.name; $("zoneDesc").textContent=z.desc;
-    if(z.id==="geum") selectTab("gb"); }
+    if(z.id==="geum") selectTab("gb");
+    if(z.id==="solo" && !$("soloCard").hidden) $("soloCard").scrollIntoView({block:"nearest",behavior:"smooth"}); }
 }
 function renderAll(){ renderMe(); renderPeers(); if(me && me.say && Date.now()-me.sayAt<8000){ const a=avEls.get("me"); if(a && !a.querySelector(".bubble")) showBubble(a,me.say); } }
 function renderSchedule(){
@@ -854,6 +892,105 @@ async function resetPScores(){
   catch(e){ $("hPStatus").textContent="바꾸지 못했어요."; }
 }
 
+/* ---------- 나는 연구자 matching ---------- */
+const SOLO_DIMS=[["method","정량","정성"],["theory","이론","실무"],["plan","계획","설계"],["field","현장답사","데이터"],
+  ["collab","혼자 연구","공동연구"],["perfect","완벽주의","일단 제출"],["night","밤샘 가능","절대 불가"],["time","아침형","저녁형"],["role","리더형","서포터형"]];
+let soloData={}, soloMatch={}, soloDraft=null;
+function soloComplete(d){ return !!(d&&d.me&&d.want&&SOLO_DIMS.every(([k])=>[0,1].includes(d.me[k])&&[0,1,2].includes(d.want[k]))); }
+function wantPts(w,v){ return w===2?0.7:(w===v?1:0); }
+function compat(a,b){ let t=0; for(const [k] of SOLO_DIMS) t+=wantPts(a.want[k],b.me[k])+wantPts(b.want[k],a.me[k]); return Math.round(t/(2*SOLO_DIMS.length)*100); }
+function groupScore(ids){ let t=0,n=0; for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){t+=compat(soloData[ids[i]],soloData[ids[j]]);n++;} return n?Math.round(t/n):0; }
+function computeMatches(){
+  const ids=Object.keys(soloData).filter(id=>soloComplete(soloData[id]));
+  const pairs=[]; for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++) pairs.push([compat(soloData[ids[i]],soloData[ids[j]]),ids[i],ids[j]]);
+  pairs.sort((a,b)=>b[0]-a[0]);
+  const used=new Set(), groups=[];
+  for(const [sc,a,b] of pairs){ if(used.has(a)||used.has(b)) continue; used.add(a); used.add(b); groups.push([a,b]); }
+  const left=ids.filter(id=>!used.has(id));
+  if(left.length===1 && groups.length){ let best=0,bs=-1; groups.forEach((g,i)=>{ const v=groupScore([...g,left[0]]); if(v>bs){bs=v;best=i;} }); groups[best].push(left[0]); }
+  return groups.map(m=>({m, score:groupScore(m), names:m.map(id=>soloName(id))})).sort((a,b)=>b.score-a.score);
+}
+function soloName(id){ const d=soloData[id]||{}; const c=checkins[id]||{}; return String(d.name||c.alias||"참가자").slice(0,12); }
+function matchPoints(a,b){
+  const out=[]; for(const [k,A,B] of SOLO_DIMS){ const da=soloData[a], db=soloData[b]; if(!da||!db) continue;
+    if(da.want[k]===db.me[k] && db.want[k]===da.me[k]) out.push(da.me[k]===db.me[k] ? "둘 다 "+(da.me[k]?B:A)+" (서로 원하던)" : "서로 원하던 "+(db.me[k]?B:A)+"·"+(da.me[k]?B:A)); }
+  for(const [k,A,B] of SOLO_DIMS){ const da=soloData[a], db=soloData[b]; if(!da||!db) continue;
+    if(da.me[k]===db.me[k] && !out.some(t=>t.startsWith("둘 다 "+(da.me[k]?B:A)))) out.push("둘 다 "+(da.me[k]?B:A)); }
+  return out;
+}
+function myGroup(){ const gs=(soloMatch&&Array.isArray(soloMatch.groups))?soloMatch.groups:[]; return gs.find(g=>Array.isArray(g.m)&&g.m.includes(uid)); }
+function renderSolo(){
+  const card=$("soloCard"); const open=!!soloMatch.open, rev=!!soloMatch.revealed;
+  card.hidden = !me || !(open||rev);
+  if(canEdit) renderHostSolo();
+  if(card.hidden) return;
+  const body=$("soloBody"); body.textContent="";
+  if(rev){
+    const g=myGroup(); $("soloTitle").textContent="💕 매칭 결과"; $("soloStatus").textContent="";
+    if(!g){ const p=document.createElement("p"); p.className="note"; p.textContent="이번 매칭에는 참여하지 않았어요."; body.appendChild(p); return; }
+    const others=g.m.filter(id=>id!==uid); const names=others.map((id,i)=>(g.names&&g.names[g.m.indexOf(id)])||soloName(id));
+    const r=document.createElement("div"); r.className="solo-res";
+    r.append(document.createTextNode("나의 연구 파트너: "+names.join(", ")+" "));
+    const pc=document.createElement("span"); pc.className="pct"; pc.textContent="궁합 "+g.score+"%"; r.appendChild(pc); body.appendChild(r);
+    const pts=others.flatMap(id=>matchPoints(uid,id)).slice(0,5);
+    if(pts.length){ const k=document.createElement("div"); k.className="note"; k.textContent="찰떡 포인트"; body.appendChild(k);
+      const ch=document.createElement("div"); ch.className="chips"; for(const t of pts){const s=document.createElement("span");s.textContent=t;ch.appendChild(s);} body.appendChild(ch); }
+    const row=document.createElement("div"); row.className="row";
+    const go=document.createElement("button"); go.type="button"; go.className="btn small primary"; go.textContent="💕 파트너에게 가기"; go.onclick=()=>goPartner(others);
+    const big=document.createElement("button"); big.type="button"; big.className="btn small"; big.textContent="전체 결과 보기"; big.onclick=()=>openMatchBoard();
+    row.append(go,big); body.appendChild(row); return;
+  }
+  $("soloTitle").textContent="내 연구 성향 고르기";
+  if(!soloDraft){ const d=soloData[uid]; soloDraft={me:{...(d&&d.me||{})}, want:{...(d&&d.want||{})}}; }
+  const intro=document.createElement("p"); intro.className="note"; intro.style.margin="0 0 4px";
+  intro.textContent="나의 성향과 원하는 공동연구자 성향을 골라 주세요. 진행자가 가장 잘 맞는 사람끼리 매칭해요."; body.appendChild(intro);
+  let done=0;
+  for(const [k,A,B] of SOLO_DIMS){
+    const w=document.createElement("div"); w.className="solo-dim";
+    const t=document.createElement("b"); t.textContent=A+" vs "+B; w.appendChild(t);
+    const r1=document.createElement("div"); r1.className="sub"; const l1=document.createElement("small"); l1.textContent="나는"; const p1=document.createElement("div"); p1.className="sub";
+    pillRow(p1,[{id:0,label:A},{id:1,label:B}],soloDraft.me[k],v=>{soloDraft.me[k]=v; saveSolo();}); r1.append(l1,p1);
+    const r2=document.createElement("div"); r2.className="sub"; const l2=document.createElement("small"); l2.textContent="원하는 상대"; const p2=document.createElement("div"); p2.className="sub";
+    pillRow(p2,[{id:0,label:A},{id:1,label:B},{id:2,label:"상관없음"}],soloDraft.want[k],v=>{soloDraft.want[k]=v; saveSolo();}); r2.append(l2,p2);
+    w.append(r1,r2); body.appendChild(w);
+    if([0,1].includes(soloDraft.me[k])&&[0,1,2].includes(soloDraft.want[k])) done++;
+  }
+  $("soloStatus").textContent = done===SOLO_DIMS.length ? "다 골랐어요! 매칭 결과를 기다려 주세요 💕" : (SOLO_DIMS.length-done)+"개 남았어요 · 고를 때마다 자동 저장돼요";
+}
+async function saveSolo(){
+  renderSolo(); if(!fx||!uid||!me) return;
+  try{ await fx.set(R("solo/"+uid),{name:me.name.slice(0,12), team:me.team||null, me:soloDraft.me, want:soloDraft.want, at:Date.now()}); }
+  catch(e){ $("soloStatus").textContent="저장하지 못했어요. 잠시 후 다시 골라 주세요."; }
+}
+function goPartner(ids){
+  for(const id of ids){ const pr=presData[id]; if(pr&&typeof pr.x==="number"&&typeof pr.y==="number"){ target={x:pr.x+(Math.random()*30-15), y:pr.y+18}; return; } }
+  $("soloStatus").textContent="파트너가 아직 가상 연구실에 없어요. 현장에서 찾아보세요!";
+}
+function openMatchBoard(){
+  const gs=(soloMatch&&Array.isArray(soloMatch.groups))?soloMatch.groups:[]; const box=$("matchList"); box.textContent="";
+  if(!gs.length){ const p=document.createElement("p"); p.className="note"; p.textContent="아직 매칭 결과가 없어요."; box.appendChild(p); }
+  gs.forEach((g,i)=>{ const r=document.createElement("div"); r.className="mrow";
+    const rk=document.createElement("span"); rk.className="rk"; rk.textContent=i+1;
+    const nm=document.createElement("span"); nm.textContent=(g.names||[]).join(" 💕 ");
+    const pt=document.createElement("span"); pt.className="pt"; pt.textContent=g.score+"%";
+    r.append(rk,nm,pt); box.appendChild(r); });
+  $("matchBoard").hidden=false; $("matchClose").focus();
+}
+function renderHostSolo(){
+  const ids=Object.keys(soloData); const ok=ids.filter(id=>soloComplete(soloData[id])).length;
+  $("hSoloInfo").textContent="참여 "+ids.length+"명 · 다 고른 사람 "+ok+"명 · "+(soloMatch.open?"성향 받는 중":"성향 받기 꺼짐")+(soloMatch.revealed?" · 결과 공개됨":"");
+  $("hSoloOpen").textContent = soloMatch.open ? "성향 받기 멈추기" : "성향 받기 시작";
+  $("hSoloReveal").textContent = soloMatch.revealed ? "결과 숨기기" : "결과 공개";
+  const box=$("hSoloPreview"); box.textContent="";
+  const gs=Array.isArray(soloMatch.groups)?soloMatch.groups:[];
+  gs.forEach((g,i)=>{ const r=document.createElement("div"); r.className="hrow"; const l=document.createElement("span"); l.className="who";
+    l.textContent=(i+1)+". "+(g.names||[]).join(" 💕 ")+" · "+g.score+"%"; r.appendChild(l); box.appendChild(r); });
+}
+async function hostSolo(patch,msg){
+  if(!fx) return; try{ await fx.update(R("soloMatch"),patch); $("hSoloStatus").textContent=msg||""; }
+  catch(e){ $("hSoloStatus").textContent="바꾸지 못했어요. 진행자 로그인을 확인해 주세요."; }
+}
+
 /* ---------- wiring ---------- */
 function selectTab(t){ for(const b of document.querySelectorAll(".tab")){b.setAttribute("aria-selected",String(b.dataset.t===t));} for(const p of ["sched","gb","ppl"]) $("pane-"+p).hidden=p!==t; }
 function wire(){
@@ -886,7 +1023,18 @@ function wire(){
   $("bigClose").onclick=()=>{ $("bigBoard").hidden=true; };
   $("hPSearch").oninput=()=>renderHostP();
   $("hPReset").onclick=()=>resetPScores();
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape") $("bigBoard").hidden=true; });
+  $("matchClose").onclick=()=>{ $("matchBoard").hidden=true; };
+  $("hSoloOpen").onclick=()=>hostSolo({open:!soloMatch.open}, soloMatch.open?"성향 받기를 멈췄어요.":"성향 받기를 시작했어요. 참가자 화면에 카드가 떠요.");
+  $("hSoloRun").onclick=()=>{ const gs=computeMatches(); if(!gs.length){ $("hSoloStatus").textContent="다 고른 사람이 2명 이상이어야 해요."; return; }
+    hostSolo({groups:gs, revealed:false, at:Date.now()}, gs.length+"쌍을 매칭했어요. 확인 후 ‘결과 공개’를 눌러 주세요."); };
+  $("hSoloReveal").onclick=()=>hostSolo({revealed:!soloMatch.revealed}, soloMatch.revealed?"결과를 숨겼어요.":"결과를 공개했어요!");
+  $("hSoloBig").onclick=()=>openMatchBoard();
+  $("hSoloBest").onclick=async()=>{ const g=(soloMatch.groups||[])[0]; if(!g){ $("hSoloStatus").textContent="먼저 매칭을 계산해 주세요."; return; }
+    if(!confirm((g.names||[]).join(", ")+"에게 개인 +20점을 줄까요?")) return; for(const id of g.m) await addPScore(id,20); $("hSoloStatus").textContent="궁합 1위에게 +20점을 줬어요."; };
+  $("hSoloReset").onclick=async()=>{ if(!confirm("매칭 결과와 모든 성향 답변을 지울까요?")) return;
+    try{ await fx.set(R("solo"),null); await fx.set(R("soloMatch"),null); soloDraft=null; $("hSoloStatus").textContent="초기화했어요."; }
+    catch(e){ $("hSoloStatus").textContent="초기화하지 못했어요."; } };
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("bigBoard").hidden=true; $("matchBoard").hidden=true; } });
   $("goTeamBtn").onclick=()=>goTeam();
   $("changeTeamBtn").onclick=()=>{ const tc=$("teamChange"); tc.hidden=!tc.hidden; renderTeams(); };
   $("hTeamN").onchange=()=>{ hostTeamDraft=Number($("hTeamN").value)||0; fillTeamHost(); };
@@ -896,7 +1044,7 @@ function wire(){
 }
 
 /* ---------- boot ---------- */
-function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderHostP(); }
+function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderHostP(); renderSolo(); }
 function failGate(msg){ $("gateNote").dataset.err=msg; $("gateNote").textContent=msg; $("liveText").textContent="연결 안 됨"; }
 async function boot(){
   drawPlan(); wire(); renderSchedule(); buildEntry(""); renderGate(); show("gateView");
@@ -927,6 +1075,8 @@ async function boot(){
   fx.onValue(R("teams"), s=>{ teams = s.val()||{}; renderTeams(); }, ()=>{});
   fx.onValue(R("checkin"), s=>{ $("checkChip").hidden=false; $("checkN").textContent=s.size; checkins=s.val()||{}; renderPersonal(); }, ()=>{});
   fx.onValue(R("pscore"), s=>{ pscores=s.val()||{}; renderPersonal(); }, ()=>{});
+  fx.onValue(R("solo"), s=>{ soloData=s.val()||{}; if(soloData[uid] && soloDraft && !Object.keys(soloDraft.me).length && !Object.keys(soloDraft.want).length) soloDraft=null; renderSolo(); }, ()=>{});
+  fx.onValue(R("soloMatch"), s=>{ soloMatch=s.val()||{}; renderSolo(); }, ()=>{});
   fx.onValue(R("presence"), s=>{ presData = s.val()||{}; if(me) renderPeers(); }, ()=>{});
   fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists() && !claiming) becomeHost(); }, ()=>{});
   startGuestbook();
