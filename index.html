@@ -366,7 +366,7 @@ function drawPlan(){
 }
 
 /* ---------- state ---------- */
-let fx=null, uid=null, canEdit=false, presData={}, serverOffset=0;
+let fx=null, uid=null, canEdit=false, presData={}, serverOffset=0, claiming=false;
 const R=(p)=>fx.ref(fx.db,p);
 function pres(patch){ if(!fx||!uid) return Promise.resolve(); return fx.update(R("presence/"+uid),{...patch,t:fx.serverTimestamp()}).catch(()=>{}); }
 function armPresence(){ if(fx&&uid) fx.onDisconnect(R("presence/"+uid)).remove().catch(()=>{}); }
@@ -608,9 +608,14 @@ function wire(){
   $("hOpenNow").onclick=()=>saveConfig({forceOpen:true,closed:false},"문을 열었어요. 대기 중인 사람들도 바로 입장할 수 있어요.");
   $("hClose").onclick=()=>saveConfig({forceOpen:false,closed:true},"문을 닫았어요. 이미 들어온 사람은 그대로 있어요.");
   $("hostForm").onsubmit=async(e)=>{ e.preventDefault(); const k=$("hostKey").value; if(!k||!fx||!uid){ $("hostLoginStatus").textContent="연결된 뒤에 다시 시도해 주세요."; return; }
-    $("hostLoginStatus").textContent="확인 중…";
-    try{ await fx.set(R("hostClaims/"+uid),k); $("hostKey").value=""; becomeHost(); $("hostLoginStatus").textContent=""; }
-    catch(err){ $("hostLoginStatus").textContent="비밀번호가 맞지 않아요."; } };
+    $("hostLoginStatus").textContent="확인 중…"; claiming=true;
+    // 콘솔에서 숫자만으로 비밀번호를 넣으면 숫자형으로 저장돼요. 글자형과 숫자형을 둘 다 시도해요.
+    const tries=[k.trim()]; if(/^-?\d+(\.\d+)?$/.test(k.trim())) tries.push(Number(k.trim()));
+    let ok=false;
+    for(const v of tries){ try{ await fx.set(R("hostClaims/"+uid),v); ok=true; break; }catch(err){} }
+    claiming=false;
+    if(ok){ $("hostKey").value=""; $("hostLoginStatus").textContent=""; becomeHost(); }
+    else { $("hostLoginStatus").textContent="비밀번호가 맞지 않아요. Firebase 데이터 탭의 secret › hostKey 값과 같은지 확인해 주세요."; } };
   $("hNow").onchange=()=>saveConfig({nowOn:$("hNow").value||null},"진행 중 코너를 바꿨어요.");
 }
 
@@ -645,7 +650,7 @@ async function boot(){
     ()=>{ clearTimeout(timer); failGate("입장 정보를 읽을 수 없어요. 데이터베이스 규칙을 확인해 주세요."); });
   fx.onValue(R("checkin"), s=>{ $("checkChip").hidden=false; $("checkN").textContent=s.size; }, ()=>{});
   fx.onValue(R("presence"), s=>{ presData = s.val()||{}; if(me) renderPeers(); }, ()=>{});
-  fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists()) becomeHost(); }, ()=>{});
+  fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists() && !claiming) becomeHost(); }, ()=>{});
   startGuestbook();
   renderGate();
 }
