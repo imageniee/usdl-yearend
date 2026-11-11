@@ -266,31 +266,32 @@ const W = 1000, H = 640;
 
 /* ---------- static data ---------- */
 const ZONES = [
-  {id:"stage", name:"메인 스테이지", kicker:"AWARDS · 21:30", x:300,y:30,w:400,h:140, fill:"rgba(216,181,106,.22)",
-   desc:"2026 USDL 방송대상 시상식. 특별상 7개와 정규상 7개, 그리고 대상은 사전 투표 + 당일 포인트로 정해져요."},
-  {id:"quiz", name:"1부 · 유에스디엘 퀴즈", kicker:"R-101 · 19:05", x:30,y:30,w:260,h:140, fill:"rgba(168,53,43,.30)",
-   desc:"내부자만 맞히는 워밍업 퀴즈. 정답 1문제당 +10점."},
-  {id:"crime", name:"2부 · 그것이 알고 싶다", kicker:"R-102 사건실 · 19:25", x:30,y:180,w:260,h:140, fill:"rgba(60,116,81,.30)",
-   desc:"익명 제보로 추적하는 연구실 미제사건. 냉장고 속 그것의 주인은 누구인가. 범인 지목 성공 +20점."},
-  {id:"blood", name:"3부 · 피의 연구실", kicker:"R-103 · 19:50", x:30,y:330,w:260,h:140, fill:"rgba(168,53,43,.30)",
-   desc:"포인트를 건 팀전·개인전 서바이벌. 비밀미션, 연합, 베팅, 익명투표."},
-  {id:"repo", name:"특별기획 · 현장 르포 상영관", kicker:"R-104 · 18:50", x:30,y:480,w:260,h:130, fill:"rgba(60,116,81,.22)",
+  {id:"stage", name:"메인 스테이지 · 시상식", kicker:"AWARDS · 20:30", x:300,y:30,w:400,h:140, fill:"rgba(216,181,106,.22)",
+   desc:"20:30 선물교환에 이어 2026 USDL 방송대상 시상식. 특별상 7개, 정규상 7개, 그리고 대상!"},
+  {id:"year", name:"2026 올해의 우리", kicker:"R-101 · 19:00", x:30,y:30,w:260,h:140, fill:"rgba(168,53,43,.30)",
+   desc:"신년회, 졸업식, 개강, 답사, 운동회, 사은회, 교수님 생신 파티, 학회 발표와 수상 소식까지. 올해의 우리를 돌아봐요."},
+  {id:"repo", name:"현장 르포 상영관", kicker:"R-102 · 19:10", x:30,y:180,w:260,h:140, fill:"rgba(60,116,81,.30)",
    desc:"카메라가 따라간 USDL의 평소 모습. 수업, 출근길, 퀵보드, 미팅 직전 첫 표정."},
-  {id:"mask", name:"4부 · 복면연구왕", kicker:"R-201 라운지 · 20:25", x:710,y:30,w:260,h:140, fill:"rgba(60,116,81,.30)",
-   desc:"익명 답변의 주인을 맞혀라. 맞히면 +15점, 끝까지 안 들키면 작성자 +15점."},
-  {id:"xres", name:"5부 · 환승연구", kicker:"R-202 카페 · 20:45", x:710,y:180,w:260,h:140, fill:"rgba(168,53,43,.30)",
-   desc:"당신의 연구는 안녕하십니까? 과거 연구주제(X-연구)의 주인을 맞히면 +15점."},
-  {id:"solo", name:"6부 · 나는 연구자", kicker:"R-203 미팅룸 · 21:05", x:710,y:330,w:260,h:140, fill:"rgba(60,116,81,.30)",
+  {id:"quiz", name:"유(에스디엘) 퀴즈", kicker:"R-103 · 19:20", x:30,y:330,w:260,h:140, fill:"rgba(168,53,43,.30)",
+   desc:"반려동물과 주인 매칭, 교수님 연구실 물건 사진의 위치 맞히기. 정답 1문제당 +10점."},
+  {id:"gift", name:"선물교환", kicker:"R-104 · 20:30", x:30,y:480,w:260,h:130, fill:"rgba(60,116,81,.22)",
+   desc:"선물에 붙은 번호표를 확인하고 교환해요. 끝나면 바로 시상식!"},
+  {id:"xres", name:"환승연구", kicker:"R-201 카페 · 19:40", x:710,y:30,w:260,h:140, fill:"rgba(168,53,43,.30)",
+   desc:"과거의 연구를 떠나 새로운 연구를 만난 연구자들. 이름을 가린 X-연구의 주인을 맞히면 +15점."},
+  {id:"solo", name:"나는 연구자", kicker:"R-202 미팅룸 · 20:00", x:710,y:180,w:260,h:140, fill:"rgba(60,116,81,.30)",
    desc:"연구를 찾고 싶은 솔로 연구자들의 극사실주의 연구 프로그램. 연구 커플 성사 시 둘 다 +20점."},
+  {id:"photo", name:"단체사진 포토존", kicker:"R-203 · 21:00", x:710,y:330,w:260,h:140, fill:"rgba(168,53,43,.22)",
+   desc:"21:00 단체사진! 2027년에도 USDL은 계속됩니다."},
   {id:"guest", name:"포토월 · 방명록", kicker:"R-204", x:710,y:480,w:260,h:130, fill:"rgba(216,181,106,.14)",
    desc:"올해 USDL에게 남기는 한마디. 오른쪽 방명록 탭에서 쓸 수 있어요."},
-  {id:"hall", name:"중정 홀", kicker:"OPENING · 18:30", x:300,y:180,w:400,h:430, fill:"rgba(255,255,255,.02)",
-   desc:"다과 테이블과 수다의 공간. 오프닝과 MC 등장도 여기서 시작해요."},
+  {id:"hall", name:"중정 홀", kicker:"DINNER · 18:00", x:300,y:180,w:400,h:430, fill:"rgba(255,255,255,.02)",
+   desc:"17:30 입장, 18:00부터 저녁식사와 인사, 자유시간. 다과 테이블 근처에서 수다를 나눠요."},
 ];
 const PROGRAM = [
-  ["18:30","OPENING · 2026 USDL 연말특집","hall"],["18:50","특별기획 · 현장 르포","repo"],["19:05","1부 · 유에스디엘 퀴즈","quiz"],
-  ["19:25","2부 · 그것이 알고 싶다","crime"],["19:50","3부 · 피의 연구실","blood"],["20:25","4부 · 복면연구왕","mask"],
-  ["20:45","5부 · 환승연구","xres"],["21:05","6부 · 나는 연구자","solo"],["21:30","AWARDS · 2026 USDL 방송대상","stage"]];
+  // [시각, 코너, 키(진행 중 표시용), 모일 방]
+  ["17:30","입장","enter","hall"],["18:00","저녁식사 & 인사 · 자유시간","dinner","hall"],["19:00","2026 올해의 우리","year","year"],
+  ["19:10","현장 르포: USDL 평소 모습","repo","repo"],["19:20","유(에스디엘) 퀴즈","quiz","quiz"],["19:40","환승연구","xres","xres"],
+  ["20:00","나는 연구자","solo","solo"],["20:30","선물교환 & 시상식","awards","stage"],["21:00","단체사진","photo","photo"]];
 const BADGES = ["교수님","박사과정","석사과정","졸업생"];
 const LABS = [
   {id:"kim", prof:"김세훈 교수님", short:"김세훈 교수님 연구실", color:"#c0392b"},
@@ -344,13 +345,24 @@ function drawPlan(){
   const sn=el("text",{x:500,y:334,"text-anchor":"middle",fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":11});sn.textContent="다과 테이블";
   for(let i=0;i<10;i++){const a=i/10*Math.PI*2;el("circle",{cx:500+Math.cos(a)*66,cy:330+Math.sin(a)*66,r:6,fill:"none",stroke:"#7d6a40"});}
   const hl=el("text",{x:320,y:205,fill:"#f2ecdf","font-family":"Black Han Sans, sans-serif","font-size":19});hl.textContent="중정 홀";
-  const hk=el("text",{x:320,y:224,fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":11});hk.textContent="OPENING · 18:30";
-  // fridge in 사건실
-  el("rect",{x:238,y:258,width:36,height:52,rx:3,fill:"rgba(242,236,223,.10)",stroke:"#f2ecdf","stroke-width":1});
-  const fr=el("text",{x:256,y:322,"text-anchor":"middle",fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":10});fr.textContent="냉장고 ?";
-  // screen in 르포
-  el("rect",{x:60,y:545,width:120,height:8,fill:"#f2ecdf",opacity:.6});
-  // photo wall
+  const hk=el("text",{x:320,y:224,fill:"#9db0a3","font-family":"IBM Plex Mono, monospace","font-size":11});hk.textContent="DINNER · 18:00";
+  // R-101 올해의 우리: photo gallery frames
+  for(let i=0;i<4;i++)el("rect",{x:52+i*58,y:110,width:46,height:36,fill:"none",stroke:"#d8b56a","stroke-dasharray":"2 3"});
+  // R-102 르포: screen
+  el("rect",{x:60,y:300,width:150,height:8,fill:"#f2ecdf",opacity:.6});
+  // R-103 퀴즈: buzzers
+  for(let i=0;i<3;i++)el("circle",{cx:80+i*60,cy:430,r:12,fill:"#a8352b",stroke:"#f2ecdf"});
+  // R-104 선물교환: gift boxes
+  for(let i=0;i<3;i++){const gx=60+i*62,gy=560;el("rect",{x:gx,y:gy,width:34,height:28,fill:"rgba(216,181,106,.25)",stroke:"#d8b56a"});
+    el("path",{d:`M${gx+17} ${gy} V${gy+28} M${gx} ${gy+10} H${gx+34}`,stroke:"#a8352b","stroke-width":3});}
+  // R-201 환승연구: cafe tables
+  for(let i=0;i<3;i++)el("circle",{cx:760+i*70,cy:130,r:15,fill:"none",stroke:"#7d6a40"});
+  // R-202 나는 연구자: heart
+  el("path",{d:"M840 300 l-20 -18 a11 11 0 0 1 20 -12 a11 11 0 0 1 20 12 z",fill:"#e0577d"});
+  // R-203 단체사진: camera on tripod
+  el("rect",{x:820,y:405,width:46,height:30,rx:5,fill:"none",stroke:"#f2ecdf"});el("circle",{cx:843,cy:420,r:8,fill:"none",stroke:"#f2ecdf"});
+  el("path",{d:"M843 435 L828 462 M843 435 L858 462 M843 435 V462",stroke:"#7d6a40"});
+  // R-204 photo wall
   for(let i=0;i<4;i++)el("rect",{x:735+i*56,y:550,width:44,height:34,fill:"none",stroke:"#7d6a40","stroke-dasharray":"2 3"});
   // entrance
   el("rect",{x:455,y:612,width:90,height:12,fill:"#0c1712"});
@@ -523,7 +535,7 @@ function renderSchedule(){
   const ul=$("schedList"); ul.textContent="";
   for(const [t,n,z] of PROGRAM){const li=document.createElement("li");if(config.nowOn===z)li.className="on";const tm=document.createElement("time");tm.textContent=t;const s=document.createElement("span");s.textContent=n;li.append(tm,s);ul.appendChild(li);}
   const now=PROGRAM.find(p=>p[2]===config.nowOn);
-  $("nowBanner").hidden=!now; if(now){$("nowText").textContent=now[1];$("nowWhere").textContent="· "+(ZONES.find(z=>z.id===now[2])||{}).name+"로 모여주세요";}
+  $("nowBanner").hidden=!now; if(now){$("nowText").textContent=now[1];$("nowWhere").textContent="· "+(ZONES.find(z=>z.id===now[3])||{}).name+"로 모여주세요";}
 }
 
 /* ---------- movement ---------- */
