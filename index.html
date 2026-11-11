@@ -920,7 +920,7 @@ function matchPoints(a,b){
 }
 function myGroup(){ const gs=(soloMatch&&Array.isArray(soloMatch.groups))?soloMatch.groups:[]; return gs.find(g=>Array.isArray(g.m)&&g.m.includes(uid)); }
 function renderSolo(){
-  const card=$("soloCard"); const open=!!soloMatch.open, rev=!!soloMatch.revealed;
+  const card=$("soloCard"); const hasGroups=Array.isArray(soloMatch.groups)&&soloMatch.groups.length>0; const open=!!soloMatch.open, rev=!!soloMatch.revealed&&hasGroups;
   card.hidden = !me || !(open||rev);
   if(canEdit) renderHostSolo();
   if(card.hidden) return;
@@ -978,9 +978,9 @@ function openMatchBoard(){
 }
 function renderHostSolo(){
   const ids=Object.keys(soloData); const ok=ids.filter(id=>soloComplete(soloData[id])).length;
-  $("hSoloInfo").textContent="참여 "+ids.length+"명 · 다 고른 사람 "+ok+"명 · "+(soloMatch.open?"성향 받는 중":"성향 받기 꺼짐")+(soloMatch.revealed?" · 결과 공개됨":"");
+  $("hSoloInfo").textContent="참여 "+ids.length+"명 · 다 고른 사람 "+ok+"명 · "+(soloMatch.open?"성향 받는 중":"성향 받기 꺼짐")+((Array.isArray(soloMatch.groups)&&soloMatch.groups.length)?" · "+soloMatch.groups.length+"쌍 계산됨":"")+(soloMatch.revealed&&Array.isArray(soloMatch.groups)&&soloMatch.groups.length?" · 결과 공개됨":"");
   $("hSoloOpen").textContent = soloMatch.open ? "성향 받기 멈추기" : "성향 받기 시작";
-  $("hSoloReveal").textContent = soloMatch.revealed ? "결과 숨기기" : "결과 공개";
+  $("hSoloReveal").textContent = (soloMatch.revealed && Array.isArray(soloMatch.groups) && soloMatch.groups.length) ? "결과 숨기기" : "결과 공개";
   const box=$("hSoloPreview"); box.textContent="";
   const gs=Array.isArray(soloMatch.groups)?soloMatch.groups:[];
   gs.forEach((g,i)=>{ const r=document.createElement("div"); r.className="hrow"; const l=document.createElement("span"); l.className="who";
@@ -1027,7 +1027,9 @@ function wire(){
   $("hSoloOpen").onclick=()=>hostSolo({open:!soloMatch.open}, soloMatch.open?"성향 받기를 멈췄어요.":"성향 받기를 시작했어요. 참가자 화면에 카드가 떠요.");
   $("hSoloRun").onclick=()=>{ const gs=computeMatches(); if(!gs.length){ $("hSoloStatus").textContent="다 고른 사람이 2명 이상이어야 해요."; return; }
     hostSolo({groups:gs, revealed:false, at:Date.now()}, gs.length+"쌍을 매칭했어요. 확인 후 ‘결과 공개’를 눌러 주세요."); };
-  $("hSoloReveal").onclick=()=>hostSolo({revealed:!soloMatch.revealed}, soloMatch.revealed?"결과를 숨겼어요.":"결과를 공개했어요!");
+  $("hSoloReveal").onclick=()=>{ const has=Array.isArray(soloMatch.groups)&&soloMatch.groups.length>0;
+    if(!soloMatch.revealed && !has){ $("hSoloStatus").textContent="먼저 ‘매칭 계산’을 눌러 주세요."; return; }
+    hostSolo({revealed:!soloMatch.revealed}, soloMatch.revealed?"결과를 숨겼어요.":"결과를 공개했어요!"); };
   $("hSoloBig").onclick=()=>openMatchBoard();
   $("hSoloBest").onclick=async()=>{ const g=(soloMatch.groups||[])[0]; if(!g){ $("hSoloStatus").textContent="먼저 매칭을 계산해 주세요."; return; }
     if(!confirm((g.names||[]).join(", ")+"에게 개인 +20점을 줄까요?")) return; for(const id of g.m) await addPScore(id,20); $("hSoloStatus").textContent="궁합 1위에게 +20점을 줬어요."; };
