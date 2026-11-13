@@ -54,6 +54,13 @@ header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .note{font-size:13px;color:var(--muted)}
 .banner{border:1px solid var(--line-dim);background:var(--paper);border-radius:10px;padding:10px 14px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .banner b{color:var(--line)}
+.buzzbar{border-color:#ffcc4d;background:rgba(255,204,77,.12);justify-content:space-between}
+.buzzbar .order{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:15px}
+.buzzbar .order span{border-radius:999px;padding:3px 10px;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.buzzbar .order span.first{font-size:18px;box-shadow:0 0 0 2px #ffcc4d}
+.buzzbtn{font-size:22px;font-weight:800;padding:12px 26px;border-radius:14px;border:0;background:#ffcc4d;color:#2a1d00;cursor:pointer;box-shadow:0 4px 0 #b38a1f}
+.buzzbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #b38a1f}
+.buzzbtn:disabled{opacity:.55;cursor:default;transform:none}
 
 /* ---------- gate / ticket ---------- */
 .gate{display:grid;place-items:center;padding-block:28px}
@@ -194,6 +201,10 @@ textarea{resize:vertical;min-height:70px}
 
   <div class="banner" id="teamStrip" hidden><span>🏆 팀 점수</span><div class="teamboard" id="teamStripList"></div>
     <button class="btn small" id="bigBoardBtn" type="button">점수판 크게 보기</button></div>
+  <div class="banner buzzbar" id="buzzBar" hidden>
+    <div class="order"><b>✋ 손들기</b><span class="note" id="buzzNote"></span><span id="buzzOrder" class="order"></span></div>
+    <button class="buzzbtn" id="buzzBtn" type="button">✋ 손들기!</button>
+  </div>
   <div class="banner" id="nowBanner" hidden><span>📺 지금 진행 중</span><b id="nowText"></b><span class="note" id="nowWhere"></span></div>
 
   <!-- gate -->
@@ -322,6 +333,15 @@ textarea{resize:vertical;min-height:70px}
           <button class="btn small" id="hScoreReset" type="button">팀 점수 0으로</button></div>
         <div id="hScore"></div>
         <span class="status" id="hTeamStatus"></span>
+        <div class="kicker" style="margin-top:12px">✋ 손들기</div>
+        <p class="note" style="margin:4px 0">‘새 손들기’를 누르면 모두의 화면에 손들기 버튼이 떠요. 가장 먼저 든 사람에게 기회를 주세요.</p>
+        <div class="row">
+          <button class="btn small primary" id="hBuzzOpen" type="button">새 손들기 시작</button>
+          <button class="btn small" id="hBuzzClose" type="button">마감</button>
+          <button class="btn small" id="hBuzzClear" type="button">손들기 끄기</button>
+        </div>
+        <div id="hBuzzList" class="scorelist"></div>
+        <span class="status" id="hBuzzStatus"></span>
         <div class="kicker" style="margin-top:12px">이름으로 팀 점수 주기</div>
         <p class="note" style="margin:4px 0">맞힌 사람 이름을 찾아 누르면 그 사람의 팀에 점수가 들어가요.</p>
         <input type="search" id="hPSearch" placeholder="이름 검색" aria-label="팀 점수 줄 사람 이름 검색" autocomplete="off">
@@ -571,7 +591,7 @@ async function enterLab(prof){
   me = {...prof, x:SPAWN.x, y:SPAWN.y};
   ssSet("usdl-me3", JSON.stringify(prof));
   show("labView");
-  renderTeams(); renderPersonal(); renderSolo(); setTimeout(goTeam, 400);
+  renderTeams(); renderPersonal(); renderSolo(); renderBuzz(); setTimeout(goTeam, 400);
   armPresence();
   sendPresence(true);
   renderAll();
@@ -897,6 +917,48 @@ async function resetPScores(){
   catch(e){ $("hPStatus").textContent="바꾸지 못했어요."; }
 }
 
+/* ---------- ✋ 손들기 ---------- */
+let buzz={};
+function buzzHands(){
+  const r=buzz.round||{}; const h=buzz.hands||{};
+  return Object.entries(h).filter(([id,v])=>v&&v.r===r.id&&typeof v.at==="number").map(([id,v])=>({id,name:String(v.name||"참가자").slice(0,12),team:teamOf(v.team),at:v.at})).sort((a,b)=>a.at-b.at);
+}
+function renderBuzz(){
+  const r=buzz.round||null; const hands=r?buzzHands():[];
+  const bar=$("buzzBar"); bar.hidden=!me || !r || (!r.open && !hands.length);
+  if(!bar.hidden){
+    const mine=hands.findIndex(x=>x.id===uid);
+    const btn=$("buzzBtn"); btn.hidden=!r.open && mine<0;
+    btn.disabled = mine>=0 || !r.open;
+    btn.textContent = mine>=0 ? (mine===0?"🥇 1등으로 손 들었어요!":(mine+1)+"번째로 손 들었어요") : (r.open?"✋ 손들기!":"마감됐어요");
+    $("buzzNote").textContent = r.open ? (hands.length?"":"진행자가 문제를 내면 가장 먼저 눌러 주세요!") : "마감";
+    const box=$("buzzOrder"); box.textContent="";
+    hands.slice(0,5).forEach((x,i)=>{ const sp=document.createElement("span"); if(i===0) sp.className="first";
+      sp.style.background=(x.team&&x.team.color)||"#777"; sp.textContent=(i===0?"🥇 ":(i+1)+". ")+x.name+(x.team?" · "+x.team.name:""); box.appendChild(sp); });
+  }
+  if(canEdit) renderHostBuzz(hands);
+}
+function renderHostBuzz(hands){
+  hands = hands || (buzz.round?buzzHands():[]);
+  const r=buzz.round||null;
+  $("hBuzzStatus").textContent = !r ? "손들기 꺼짐" : (r.open?"받는 중 · ":"마감 · ")+hands.length+"명 손 듦";
+  const box=$("hBuzzList"); box.textContent="";
+  const t0=hands.length?hands[0].at:0;
+  hands.forEach((x,i)=>{ const row=document.createElement("div"); row.className="hrow p";
+    const l=document.createElement("span"); l.className="who";
+    l.textContent=(i===0?"🥇 ":(i+1)+". ")+x.name+(x.team?" → "+x.team.name:" (팀 없음)")+(i?" · +"+((x.at-t0)/1000).toFixed(2)+"초":"");
+    const bs=document.createElement("div"); bs.className="btns";
+    for(const d of [10,15,20]){ const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent="정답 +"+d;
+      b.setAttribute("aria-label",x.name+" 팀 +"+d+"점"); b.onclick=async()=>{ if(!x.team){ $("hBuzzStatus").textContent=x.name+"님은 팀이 없어요."; return; } await addScore(x.team.id,d); $("hBuzzStatus").textContent=x.name+" → "+x.team.name+" +"+d+"점"; }; bs.appendChild(b); }
+    row.append(l,bs); box.appendChild(row); });
+}
+async function pressBuzz(){
+  const r=buzz.round; if(!fx||!uid||!me||!r||!r.open) return;
+  $("buzzBtn").disabled=true;
+  try{ await fx.set(R("buzz/hands/"+uid),{name:me.name.slice(0,12), team:me.team||null, r:r.id, at:fx.serverTimestamp()}); emote("✋"); }
+  catch(e){ $("buzzNote").textContent="이미 손을 들었거나 마감됐어요."; renderBuzz(); }
+}
+
 /* ---------- 나는 연구자 matching ---------- */
 const SOLO_DIMS=[["method","정량","정성"],["theory","이론","실무"],["plan","계획","설계"],["field","현장답사","데이터"],
   ["collab","혼자 연구","공동연구"],["perfect","완벽주의","일단 제출"],["night","밤샘 가능","절대 불가"],["time","아침형","저녁형"],["role","리더형","서포터형"]];
@@ -1029,6 +1091,10 @@ function wire(){
   $("hPSearch").oninput=()=>renderHostP();
   $("hPReset").onclick=()=>resetPScores();
   $("matchClose").onclick=()=>{ $("matchBoard").hidden=true; };
+  $("buzzBtn").onclick=()=>pressBuzz();
+  $("hBuzzOpen").onclick=async()=>{ try{ await fx.set(R("buzz"),{round:{open:true,id:Date.now()}}); }catch(e){ $("hBuzzStatus").textContent="시작하지 못했어요. 진행자 로그인을 확인해 주세요."; } };
+  $("hBuzzClose").onclick=async()=>{ try{ await fx.update(R("buzz/round"),{open:false}); }catch(e){ $("hBuzzStatus").textContent="마감하지 못했어요."; } };
+  $("hBuzzClear").onclick=async()=>{ try{ await fx.set(R("buzz"),null); }catch(e){ $("hBuzzStatus").textContent="끄지 못했어요."; } };
   $("hSoloOpen").onclick=()=>hostSolo({open:!soloMatch.open}, soloMatch.open?"성향 받기를 멈췄어요.":"성향 받기를 시작했어요. 참가자 화면에 카드가 떠요.");
   $("hSoloRun").onclick=()=>{ const gs=computeMatches(); if(!gs.length){ $("hSoloStatus").textContent="다 고른 사람이 2명 이상이어야 해요."; return; }
     hostSolo({groups:gs, revealed:false, at:Date.now()}, gs.length+"쌍을 매칭했어요. 확인 후 ‘결과 공개’를 눌러 주세요."); };
@@ -1051,7 +1117,7 @@ function wire(){
 }
 
 /* ---------- boot ---------- */
-function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderHostP(); renderSolo(); }
+function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderHostP(); renderSolo(); renderBuzz(); }
 function failGate(msg){ $("gateNote").dataset.err=msg; $("gateNote").textContent=msg; $("liveText").textContent="연결 안 됨"; }
 async function boot(){
   drawPlan(); wire(); renderSchedule(); buildEntry(""); renderGate(); show("gateView");
@@ -1084,6 +1150,7 @@ async function boot(){
   fx.onValue(R("pscore"), s=>{ pscores=s.val()||{}; renderPersonal(); }, ()=>{});
   fx.onValue(R("solo"), s=>{ soloData=s.val()||{}; if(soloData[uid] && soloDraft && !Object.keys(soloDraft.me).length && !Object.keys(soloDraft.want).length) soloDraft=null; renderSolo(); }, ()=>{});
   fx.onValue(R("soloMatch"), s=>{ soloMatch=s.val()||{}; renderSolo(); }, ()=>{});
+  fx.onValue(R("buzz"), s=>{ buzz=s.val()||{}; renderBuzz(); }, ()=>{});
   fx.onValue(R("presence"), s=>{ presData = s.val()||{}; if(me) renderPeers(); }, ()=>{});
   fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists() && !claiming) becomeHost(); }, ()=>{});
   startGuestbook();
