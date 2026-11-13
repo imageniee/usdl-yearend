@@ -269,12 +269,6 @@ textarea{resize:vertical;min-height:70px}
       <p class="legend">클릭(탭)한 곳으로 걸어가요 · 방향키/WASD로도 이동 · 방에 들어가면 오른쪽에 안내가 떠요</p>
     </div>
     <aside class="rail">
-      <div class="card" id="meCard" hidden>
-        <div class="kicker">개인 점수</div>
-        <h3><span class="mypts" id="myPts">0</span>점 <small class="note" id="myRank"></small></h3>
-        <div class="scorelist" id="pTop"></div>
-        <div class="row"><button class="btn small" id="bigBoardBtn2" type="button">점수판 크게 보기</button></div>
-      </div>
       <div class="card" id="soloCard" hidden>
         <div class="kicker">💕 나는 연구자 · R-202 미팅룸</div>
         <h3 id="soloTitle">내 연구 성향 고르기</h3>
@@ -342,12 +336,6 @@ textarea{resize:vertical;min-height:70px}
         </div>
         <div id="hBuzzList" class="scorelist"></div>
         <span class="status" id="hBuzzStatus"></span>
-        <div class="kicker" style="margin-top:12px">이름으로 팀 점수 주기</div>
-        <p class="note" style="margin:4px 0">맞힌 사람 이름을 찾아 누르면 그 사람의 팀에 점수가 들어가요.</p>
-        <input type="search" id="hPSearch" placeholder="이름 검색" aria-label="팀 점수 줄 사람 이름 검색" autocomplete="off">
-        <div id="hPScore" class="pscroll"></div>
-        <div class="row" hidden><button class="btn small" id="hPReset" type="button">개인 점수 0으로</button></div>
-        <span class="status" id="hPStatus"></span>
         <div class="kicker" style="margin-top:12px">💕 나는 연구자 매칭</div>
         <p class="note" style="margin:4px 0" id="hSoloInfo">참여 0명</p>
         <div class="row">
@@ -382,7 +370,6 @@ textarea{resize:vertical;min-height:70px}
   <h2>🏆 점수판</h2>
   <div class="bigcols">
     <div class="bigcol" id="bigTeamCol"><div class="biglist" id="bigList"></div></div>
-    <div class="bigcol" hidden><h3>개인 TOP 10</h3><div class="biglist p" id="bigPList"></div></div>
   </div>
   <button class="btn" id="bigClose" type="button">닫기</button>
 </div>
@@ -862,59 +849,14 @@ async function resetScores(){
   catch(e){ $("hTeamStatus").textContent="바꾸지 못했어요."; }
 }
 
-/* ---------- personal scores ---------- */
-let checkins={}, pscores={}, lastMyPts=null;
-function people(){
-  return Object.entries(checkins).map(([id,c])=>{ c=c||{}; const t=teamOf(c.team);
-    return {id, tid:t?t.id:null, name:String(c.alias||"익명").slice(0,12), team:t?t.name:"", color:(t&&t.color)||c.color||"#8a8f88", score:Number(pscores[id])||0}; });
-}
-function rankList(list){ const out=[]; list.forEach((p,i)=>{ out.push({...p, rank: i>0 && list[i-1].score===p.score ? out[i-1].rank : i+1}); }); return out; }
-function renderPersonal(){
-  const ranked=rankList(people().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,"ko")));
-  const scored=ranked.filter(p=>p.score>0); const max=Math.max(0,...ranked.map(p=>p.score));
-  $("meCard").hidden=true;
-  const mine=Number(pscores[uid])||0; const el=$("myPts"); el.textContent=mine;
-  if(lastMyPts!==null && lastMyPts!==mine){ el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); } lastMyPts=mine;
-  const meRow=ranked.find(p=>p.id===uid);
-  $("myRank").textContent = meRow && mine>0 ? "· "+meRow.rank+"위 / "+ranked.length+"명" : "";
-  const top=$("pTop"); top.textContent="";
-  if(!scored.length){ const n=document.createElement("p"); n.className="note"; n.style.margin="0"; n.textContent="아직 개인 점수가 없어요."; top.appendChild(n); }
-  scored.slice(0,5).forEach(p=>top.appendChild(rowEl("srow",p,p.rank,max,p.id===uid," (나)")));
-  const bp=$("bigPList"); bp.textContent="";
-  if(!scored.length){ const n=document.createElement("p"); n.className="note"; n.textContent="아직 개인 점수가 없어요."; bp.appendChild(n); }
-  scored.slice(0,10).forEach(p=>bp.appendChild(rowEl("brow",p,p.rank,max,false)));
-  $("bigTeamCol").hidden = teamList().length===0;
-  if(canEdit) renderHostP();
-}
-function renderHostP(){
-  const q=($("hPSearch").value||"").trim(); const box=$("hPScore"); box.textContent="";
-  const list=people().filter(p=>!q||p.name.includes(q)).sort((a,b)=>a.name.localeCompare(b.name,"ko"));
-  if(!list.length){ const n=document.createElement("p"); n.className="note"; n.textContent=q?"찾는 이름이 없어요.":"아직 입장한 사람이 없어요."; box.appendChild(n); return; }
-  for(const p of list){
-    const r=document.createElement("div"); r.className="hrow p";
-    const l=document.createElement("span"); l.className="who"; const dot=document.createElement("i");
-    dot.style.cssText="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:"+p.color;
-    l.append(dot,document.createTextNode(p.name+(p.team?" → "+p.team:" (팀 없음)")));
-    const bs=document.createElement("div"); bs.className="btns";
-    for(const d of [-1,1,5,10,15,20]){ const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent=(d>0?"+":"")+d;
-      b.setAttribute("aria-label",p.name+" "+(d>0?"+":"")+d+"점"); b.onclick=()=>addScoreFor(p.id,d); bs.appendChild(b); }
-    r.append(l,bs); box.appendChild(r);
-  }
-}
+/* ---------- check-ins (팀 정보) ---------- */
+let checkins={};
+function renderPersonal(){ $("bigTeamCol").hidden = teamList().length===0; }
 async function addScoreFor(id,d){
-  const c=checkins[id]||{}; const t=teamOf(c.team);
-  if(!t){ $("hPStatus").textContent=String(c.alias||"이 사람")+"님은 팀이 없어요. 팀을 먼저 고르게 해 주세요."; return false; }
-  await addScore(t.id,d); $("hPStatus").textContent=String(c.alias||"")+" → "+t.name+" "+(d>0?"+":"")+d+"점"; return true;
-}
-async function addPScore(id,d){
-  if(!fx) return;
-  try{ await fx.runTransaction(R("pscore/"+id), cur=>(Number(cur)||0)+d); $("hPStatus").textContent=""; }
-  catch(e){ $("hPStatus").textContent="점수를 바꾸지 못했어요. 진행자 로그인을 확인해 주세요."; }
-}
-async function resetPScores(){
-  if(!fx) return; if(!confirm("개인 점수를 모두 0으로 바꿀까요?")) return;
-  try{ await fx.set(R("pscore"),null); $("hPStatus").textContent="개인 점수를 0으로 바꿨어요."; }
-  catch(e){ $("hPStatus").textContent="바꾸지 못했어요."; }
+  const c=checkins[id]||{}; const sd=(typeof soloData==="object"&&soloData[id])||{};
+  const t=teamOf(c.team)||teamOf(sd.team); const nm=String(c.alias||sd.name||"이 사람");
+  if(!t){ $("hSoloStatus").textContent=nm+"님은 팀이 없어요."; return false; }
+  await addScore(t.id,d); return true;
 }
 
 /* ---------- ✋ 손들기 ---------- */
@@ -1086,10 +1028,7 @@ function wire(){
     if(ok){ $("hostKey").value=""; $("hostLoginStatus").textContent=""; becomeHost(); }
     else { $("hostLoginStatus").textContent="비밀번호가 맞지 않아요. Firebase 데이터 탭의 secret › hostKey 값과 같은지 확인해 주세요."; } };
   $("bigBoardBtn").onclick=()=>{ $("bigBoard").hidden=false; $("bigClose").focus(); };
-  $("bigBoardBtn2").onclick=()=>{ renderPersonal(); $("bigBoard").hidden=false; $("bigClose").focus(); };
   $("bigClose").onclick=()=>{ $("bigBoard").hidden=true; };
-  $("hPSearch").oninput=()=>renderHostP();
-  $("hPReset").onclick=()=>resetPScores();
   $("matchClose").onclick=()=>{ $("matchBoard").hidden=true; };
   $("buzzBtn").onclick=()=>pressBuzz();
   $("hBuzzOpen").onclick=async()=>{ try{ await fx.set(R("buzz"),{round:{open:true,id:Date.now()}}); }catch(e){ $("hBuzzStatus").textContent="시작하지 못했어요. 진행자 로그인을 확인해 주세요."; } };
@@ -1117,7 +1056,7 @@ function wire(){
 }
 
 /* ---------- boot ---------- */
-function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderHostP(); renderSolo(); renderBuzz(); }
+function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderSolo(); renderBuzz(); }
 function failGate(msg){ $("gateNote").dataset.err=msg; $("gateNote").textContent=msg; $("liveText").textContent="연결 안 됨"; }
 async function boot(){
   drawPlan(); wire(); renderSchedule(); buildEntry(""); renderGate(); show("gateView");
@@ -1147,7 +1086,6 @@ async function boot(){
     ()=>{ clearTimeout(timer); failGate("입장 정보를 읽을 수 없어요. 데이터베이스 규칙을 확인해 주세요."); });
   fx.onValue(R("teams"), s=>{ teams = s.val()||{}; renderTeams(); }, ()=>{});
   fx.onValue(R("checkin"), s=>{ $("checkChip").hidden=false; $("checkN").textContent=s.size; checkins=s.val()||{}; renderPersonal(); }, ()=>{});
-  fx.onValue(R("pscore"), s=>{ pscores=s.val()||{}; renderPersonal(); }, ()=>{});
   fx.onValue(R("solo"), s=>{ soloData=s.val()||{}; if(soloData[uid] && soloDraft && !Object.keys(soloDraft.me).length && !Object.keys(soloDraft.want).length) soloDraft=null; renderSolo(); }, ()=>{});
   fx.onValue(R("soloMatch"), s=>{ soloMatch=s.val()||{}; renderSolo(); }, ()=>{});
   fx.onValue(R("buzz"), s=>{ buzz=s.val()||{}; renderBuzz(); }, ()=>{});
