@@ -182,6 +182,14 @@ textarea{resize:vertical;min-height:70px}
 .mrow{display:grid;grid-template-columns:clamp(40px,6vw,70px) 1fr auto;gap:16px;align-items:center;font-size:clamp(18px,3vw,34px)}
 .mrow .rk{font-family:var(--mono);color:var(--muted);text-align:right}
 .mrow .pt{font-family:var(--mono);color:#ff8fb3}
+.letterbar{border-color:#f3a6b8;background:rgba(243,166,184,.12)}
+.envs{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.envs button{text-align:left}
+.paper{width:min(760px,100%);background:#fbf5e6;color:#2b2418;border-radius:14px;padding:clamp(20px,4vw,44px);box-shadow:0 10px 40px rgba(0,0,0,.45);font-size:clamp(17px,2.4vw,26px);line-height:1.7}
+.paper .to{font-weight:800;color:#8b2d2a;margin-bottom:12px}
+.paper .body{white-space:pre-wrap;overflow-wrap:anywhere}
+.paper .from{margin-top:18px;text-align:right;color:#6b5a3e;font-weight:700}
+.lrow .who{font-size:13px}
 .bump{animation:bump .6s ease-out}
 @keyframes bump{0%{transform:scale(1)}30%{transform:scale(1.35);color:var(--line)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.bump{animation:none}.srow .bar,.brow .bar{transition:none}}
@@ -205,6 +213,8 @@ textarea{resize:vertical;min-height:70px}
     <div class="order"><b>✋ 손들기</b><span class="note" id="buzzNote"></span><span id="buzzOrder" class="order"></span></div>
     <button class="buzzbtn" id="buzzBtn" type="button">✋ 손들기!</button>
   </div>
+  <div class="banner letterbar" id="letterBar" hidden><span>💌 전하지 못한 말이 도착했어요!</span><b id="letterCount"></b>
+    <button class="btn small primary" id="letterOpenBtn" type="button">편지 열어 보기</button></div>
   <div class="banner" id="nowBanner" hidden><span>📺 지금 진행 중</span><b id="nowText"></b><span class="note" id="nowWhere"></span></div>
 
   <!-- gate -->
@@ -269,6 +279,11 @@ textarea{resize:vertical;min-height:70px}
       <p class="legend">클릭(탭)한 곳으로 걸어가요 · 방향키/WASD로도 이동 · 방에 들어가면 오른쪽에 안내가 떠요</p>
     </div>
     <aside class="rail">
+      <div class="card" id="letterCard" hidden>
+        <div class="kicker">💌 전하지 못한 말</div>
+        <h3 id="letterTitle">편지가 도착했어요</h3>
+        <div class="envs" id="letterEnvs"></div>
+      </div>
       <div class="card" id="soloCard" hidden>
         <div class="kicker">💕 나는 연구자 · R-202 미팅룸</div>
         <h3 id="soloTitle">내 연구 성향 고르기</h3>
@@ -350,6 +365,19 @@ textarea{resize:vertical;min-height:70px}
         </div>
         <div id="hSoloPreview" class="scorelist"></div>
         <span class="status" id="hSoloStatus"></span>
+        <div class="kicker" style="margin-top:12px">💌 전하지 못한 말</div>
+        <p class="note" style="margin:4px 0">① 구성원 명단 저장 → ② 구글폼 응답 시트를 통째로 복사(전체 선택 → 복사)해 붙여넣고 ‘편지 불러오기’ → ③ 0통인 사람에게 운영진 메시지 → ④ ‘편지 배달 시작’</p>
+        <label class="f" for="hRoster">구성원 명단 (한 줄에 한 명, 본명)<textarea id="hRoster" rows="4" placeholder="김세훈 교수님&#10;김민주&#10;이서연"></textarea></label>
+        <div class="row"><button class="btn small" id="hRosterSave" type="button">명단 저장</button></div>
+        <label class="f" for="hLetterPaste">응답 시트 붙여넣기<textarea id="hLetterPaste" rows="3" placeholder="구글 시트에서 전체 선택 → 복사 → 여기에 붙여넣기"></textarea></label>
+        <div class="row">
+          <button class="btn small primary" id="hLetterImport" type="button">편지 불러오기</button>
+          <button class="btn small" id="hLetterOpen" type="button">편지 배달 시작</button>
+        </div>
+        <span class="status" id="hLetterStatus"></span>
+        <div id="hLetterCover" class="scorelist pscroll"></div>
+        <div class="kicker" style="margin-top:8px">낭독 후보 (이름 없이 읽어도 된다고 한 편지)</div>
+        <div id="hLetterRead" class="scorelist pscroll"></div>
       </div>
     </aside>
   </section>
@@ -377,6 +405,10 @@ textarea{resize:vertical;min-height:70px}
   <h2>💕 나는 연구자 · 매칭 결과</h2>
   <div class="biglist" id="matchList"></div>
   <button class="btn" id="matchClose" type="button">닫기</button>
+</div>
+<div class="bigboard" id="letterView" hidden>
+  <div class="paper"><div class="to" id="lvTo"></div><div class="body" id="lvBody"></div><div class="from" id="lvFrom"></div></div>
+  <div class="row"><button class="btn" id="lvPrev" type="button">이전</button><span class="note" id="lvPos"></span><button class="btn" id="lvNext" type="button">다음</button><button class="btn" id="lvClose" type="button">닫기</button></div>
 </div>
 <script src="firebase-config.js"></script>
 <script>
@@ -578,7 +610,7 @@ async function enterLab(prof){
   me = {...prof, x:SPAWN.x, y:SPAWN.y};
   ssSet("usdl-me3", JSON.stringify(prof));
   show("labView");
-  renderTeams(); renderPersonal(); renderSolo(); renderBuzz(); setTimeout(goTeam, 400);
+  renderTeams(); renderPersonal(); renderSolo(); renderBuzz(); renderLetters(); setTimeout(goTeam, 400);
   armPresence();
   sendPresence(true);
   renderAll();
@@ -901,6 +933,99 @@ async function pressBuzz(){
   catch(e){ $("buzzNote").textContent="이미 손을 들었거나 마감됐어요."; renderBuzz(); }
 }
 
+/* ---------- 💌 전하지 못한 말 ---------- */
+let letterCfg={}, myLetters={}, myLetterKey=null, myLetterUnsub=null, allLetters={}, roster=[], lvList=[], lvIdx=0, lvStage=false;
+function nameKey(n){ return String(n||"").replace(/\s+/g,"").replace(/(교수님|교수|선배님|선배|박사님|님)$/,"").replace(/[.#$\[\]\/]/g,"_").slice(0,24); }
+function watchMyLetters(){
+  if(!fx||!me) return; const k=nameKey(me.name); if(!k||k===myLetterKey) return;
+  if(myLetterUnsub){ try{myLetterUnsub();}catch(e){} } myLetterKey=k;
+  myLetterUnsub=fx.onValue(R("letters/"+k), s=>{ myLetters=s.val()||{}; renderLetters(); }, ()=>{});
+}
+function letterArr(obj){ return Object.entries(obj||{}).filter(([id,l])=>l&&typeof l.text==="string").map(([id,l])=>({id,...l})).sort((a,b)=>(a.staff?1:0)-(b.staff?1:0)||a.id.localeCompare(b.id)); }
+function renderLetters(){
+  watchMyLetters();
+  const open=!!letterCfg.open && !!me; const mine=letterArr(myLetters);
+  $("letterBar").hidden=!open; $("letterCard").hidden=!open;
+  if(open){
+    $("letterCount").textContent = mine.length ? mine.length+"통" : "";
+    $("letterOpenBtn").hidden = !mine.length;
+    $("letterTitle").textContent = mine.length ? "편지 "+mine.length+"통이 도착했어요" : "아직 도착한 편지가 없어요";
+    const box=$("letterEnvs"); box.textContent="";
+    if(!mine.length){ const p=document.createElement("p"); p.className="note"; p.textContent="이름이 다르게 등록됐을 수 있어요. 진행자에게 알려 주세요!"; box.appendChild(p); }
+    mine.forEach((l,i)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent="✉️ 편지 "+(i+1)+" · From. "+(l.staff?"2026 USDL 방송대상 제작진":(l.from||"익명")); b.onclick=()=>openLetters(mine,i,false); box.appendChild(b); });
+  }
+  if(canEdit) renderHostLetters();
+}
+function openLetters(list,i,stage){ lvList=list; lvIdx=i; lvStage=stage; showLetter(); $("letterView").hidden=false; $("lvClose").focus(); }
+function showLetter(){
+  const l=lvList[lvIdx]; if(!l) return;
+  $("lvTo").textContent="To. "+(l.to||(me&&me.name)||"");
+  $("lvBody").textContent=l.text;
+  $("lvFrom").textContent="From. "+(lvStage?"익명":(l.staff?"2026 USDL 방송대상 제작진":(l.from||"익명")));
+  $("lvPos").textContent=(lvIdx+1)+" / "+lvList.length; $("lvPrev").disabled=lvIdx===0; $("lvNext").disabled=lvIdx>=lvList.length-1;
+}
+function parseSheet(txt){
+  const delim = (txt.split("\n")[0]||"").includes("\t") ? "\t" : ",";
+  const rows=[]; let row=[], cell="", q=false;
+  for(let i=0;i<txt.length;i++){ const c=txt[i];
+    if(q){ if(c==='"'){ if(txt[i+1]==='"'){cell+='"';i++;} else q=false; } else cell+=c; continue; }
+    if(c==='"' && cell===""){ q=true; continue; }
+    if(c===delim){ row.push(cell); cell=""; continue; }
+    if(c==="\r") continue;
+    if(c==="\n"){ row.push(cell); rows.push(row); row=[]; cell=""; continue; }
+    cell+=c; }
+  if(cell!==""||row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+function lettersFromSheet(txt){
+  const rows=parseSheet(txt); const hi=rows.findIndex(r=>r.some(c=>c.trim()==="받는 사람 1"));
+  if(hi<0) throw new Error("‘받는 사람 1’ 칸을 찾지 못했어요. 응답 시트의 첫 줄(질문 제목)까지 함께 복사해 주세요.");
+  const H=rows[hi].map(c=>c.trim()); const col=(t)=>H.indexOf(t);
+  const iName=col("이름"), iShow=H.findIndex(h=>h.startsWith("보내는 사람 표시")), iRead=H.findIndex(h=>h.startsWith("당일 낭독"));
+  const out=[];
+  rows.slice(hi+1).forEach((r,ri)=>{ for(let k=1;k<=3;k++){ const to=(r[col("받는 사람 "+k)]||"").trim(), text=(r[col("전하고 싶은 말 "+k)]||"").trim();
+    if(!to||!text) continue; const show=(r[iShow]||"").includes("밝히"); const ok=(r[iRead]||"").includes("낭독해도");
+    out.push({id:"f_"+(ri+1)+"_"+k, key:nameKey(to), l:{to:to.slice(0,24), text:text.slice(0,2000), from: show ? String(r[iName]||"").trim().slice(0,24)||null : null, ok, staff:false}}); } });
+  return out;
+}
+function coverNames(){
+  const m=new Map(); const add=(n,src)=>{ const k=nameKey(n); if(!k) return; if(!m.has(k)) m.set(k,{name:String(n).trim(),src:new Set()}); m.get(k).src.add(src); };
+  roster.forEach(n=>add(n,"명단")); Object.values(checkins||{}).forEach(c=>c&&c.alias&&add(c.alias,"입장"));
+  Object.entries(allLetters||{}).forEach(([k,v])=>{ const a=letterArr(v); if(a.length) add(a[0].to||k,"편지"); });
+  return [...m.entries()].map(([k,v])=>{ const a=letterArr(allLetters[k]); return {k,name:v.name,src:v.src,n:a.length,staff:a.filter(l=>l.staff).length}; })
+    .sort((a,b)=>(a.n?1:0)-(b.n?1:0)||a.name.localeCompare(b.name,"ko"));
+}
+function renderHostLetters(){
+  $("hLetterOpen").textContent = letterCfg.open ? "편지 배달 멈추기" : "편지 배달 시작";
+  const ta=$("hRoster"); if(document.activeElement!==ta && !ta.dataset.dirty) ta.value=roster.join("\n");
+  const list=coverNames(); const zero=list.filter(x=>!x.n).length; const total=Object.values(allLetters||{}).reduce((t,v)=>t+letterArr(v).length,0);
+  const st=$("hLetterStatus"); if(!st.dataset.hold) st.textContent="편지 "+total+"통 · 받는 사람 "+list.filter(x=>x.n).length+"명 · 0통 "+zero+"명"+(letterCfg.open?" · 배달 중":"");
+  const box=$("hLetterCover"); box.textContent="";
+  for(const x of list){ const r=document.createElement("div"); r.className="hrow p lrow";
+    const l=document.createElement("span"); l.className="who";
+    const odd = x.src.has("편지") && !x.src.has("명단") && !x.src.has("입장");
+    l.textContent=(x.n?"":"⚠️ ")+(odd?"❓ ":"")+x.name+" · "+x.n+"통"+(x.staff?" (운영진 "+x.staff+")":"")+(odd?" — 명단·입장에 없는 이름 (오타?)":"");
+    r.appendChild(l);
+    if(!x.n || x.staff){ const w=document.createElement("div"); w.className="btns";
+      const inp=document.createElement("input"); inp.type="text"; inp.maxLength=300; inp.placeholder=x.name+"님께 운영진 메시지"; inp.setAttribute("aria-label",x.name+"에게 보낼 운영진 메시지");
+      const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent="운영진 메시지 추가";
+      b.onclick=async()=>{ const t=inp.value.trim(); if(!t) return; try{ await fx.set(R("letters/"+x.k+"/s_"+Date.now()),{to:x.name,text:t,from:null,ok:false,staff:true}); inp.value=""; }catch(e){ st.textContent="저장하지 못했어요. 진행자 로그인을 확인해 주세요."; } };
+      w.append(inp,b); r.appendChild(w); }
+    box.appendChild(r); }
+  const rb=$("hLetterRead"); rb.textContent="";
+  const okList=[]; Object.values(allLetters||{}).forEach(v=>letterArr(v).forEach(l=>{ if(l.ok&&!l.staff) okList.push(l); }));
+  if(!okList.length){ const p=document.createElement("p"); p.className="note"; p.textContent="아직 낭독 후보가 없어요."; rb.appendChild(p); }
+  okList.forEach((l,i)=>{ const r=document.createElement("div"); r.className="hrow p lrow"; const t=document.createElement("span"); t.className="who";
+    t.textContent="To. "+l.to+" — "+l.text.slice(0,50)+(l.text.length>50?"…":""); const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent="크게 보기 (익명)";
+    b.onclick=()=>openLetters(okList,i,true); r.append(t,b); rb.appendChild(r); });
+}
+let hostLetterSubs=false;
+function hostLetterWatch(){
+  if(hostLetterSubs||!fx) return; hostLetterSubs=true;
+  fx.onValue(R("letters"), s=>{ allLetters=s.val()||{}; renderLetters(); }, ()=>{});
+  fx.onValue(R("letterRoster"), s=>{ const v=s.val(); roster=Array.isArray(v&&v.names)?v.names:[]; renderLetters(); }, ()=>{});
+}
+
 /* ---------- 나는 연구자 matching ---------- */
 const SOLO_DIMS=[["method","정량","정성"],["theory","이론","실무"],["plan","계획","설계"],["field","현장답사","데이터"],
   ["collab","혼자 연구","공동연구"],["perfect","완벽주의","일단 제출"],["night","밤샘 가능","절대 불가"],["time","아침형","저녁형"],["role","리더형","서포터형"]];
@@ -1031,6 +1156,21 @@ function wire(){
   $("bigClose").onclick=()=>{ $("bigBoard").hidden=true; };
   $("matchClose").onclick=()=>{ $("matchBoard").hidden=true; };
   $("buzzBtn").onclick=()=>pressBuzz();
+  $("letterOpenBtn").onclick=()=>{ const a=letterArr(myLetters); if(a.length) openLetters(a,0,false); };
+  $("lvPrev").onclick=()=>{ if(lvIdx>0){ lvIdx--; showLetter(); } };
+  $("lvNext").onclick=()=>{ if(lvIdx<lvList.length-1){ lvIdx++; showLetter(); } };
+  $("lvClose").onclick=()=>{ $("letterView").hidden=true; };
+  $("hRoster").oninput=()=>{ $("hRoster").dataset.dirty="1"; };
+  $("hRosterSave").onclick=async()=>{ const names=[...new Set($("hRoster").value.split("\n").map(x=>x.trim()).filter(Boolean))].slice(0,200).map(x=>x.slice(0,24));
+    try{ await fx.set(R("letterRoster"),{names}); delete $("hRoster").dataset.dirty; $("hLetterStatus").textContent="명단 "+names.length+"명을 저장했어요."; }catch(e){ $("hLetterStatus").textContent="명단을 저장하지 못했어요."; } };
+  $("hLetterImport").onclick=async()=>{ const st=$("hLetterStatus"); st.dataset.hold="1";
+    try{ const items=lettersFromSheet($("hLetterPaste").value); if(!items.length) throw new Error("불러올 편지가 없어요.");
+      const next={}; Object.entries(allLetters||{}).forEach(([k,v])=>Object.entries(v||{}).forEach(([id,l])=>{ if(id.startsWith("s_")){ (next[k]=next[k]||{})[id]=l; } }));
+      items.forEach(x=>{ (next[x.key]=next[x.key]||{})[x.id]=x.l; });
+      await fx.set(R("letters"),next); $("hLetterPaste").value=""; st.textContent="편지 "+items.length+"통을 불러왔어요. (다시 불러오면 구글폼 편지만 새로 바뀌고 운영진 메시지는 그대로예요)"; }
+    catch(e){ st.textContent=e.message||"불러오지 못했어요."; }
+    setTimeout(()=>{ delete st.dataset.hold; renderLetters(); },6000); };
+  $("hLetterOpen").onclick=async()=>{ try{ await fx.set(R("letterCfg"),{open:!letterCfg.open}); }catch(e){ $("hLetterStatus").textContent="바꾸지 못했어요. 진행자 로그인을 확인해 주세요."; } };
   $("hBuzzOpen").onclick=async()=>{ try{ await fx.set(R("buzz"),{round:{open:true,id:Date.now()}}); }catch(e){ $("hBuzzStatus").textContent="시작하지 못했어요. 진행자 로그인을 확인해 주세요."; } };
   $("hBuzzClose").onclick=async()=>{ try{ await fx.update(R("buzz/round"),{open:false}); }catch(e){ $("hBuzzStatus").textContent="마감하지 못했어요."; } };
   $("hBuzzClear").onclick=async()=>{ try{ await fx.set(R("buzz"),null); }catch(e){ $("hBuzzStatus").textContent="끄지 못했어요."; } };
@@ -1046,7 +1186,8 @@ function wire(){
   $("hSoloReset").onclick=async()=>{ if(!confirm("매칭 결과와 모든 성향 답변을 지울까요?")) return;
     try{ await fx.set(R("solo"),null); await fx.set(R("soloMatch"),null); soloDraft=null; $("hSoloStatus").textContent="초기화했어요."; }
     catch(e){ $("hSoloStatus").textContent="초기화하지 못했어요."; } };
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("bigBoard").hidden=true; $("matchBoard").hidden=true; } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("bigBoard").hidden=true; $("matchBoard").hidden=true; $("letterView").hidden=true; }
+    if(!$("letterView").hidden){ if(e.key==="ArrowRight") $("lvNext").click(); if(e.key==="ArrowLeft") $("lvPrev").click(); } });
   $("goTeamBtn").onclick=()=>goTeam();
   $("changeTeamBtn").onclick=()=>{ const tc=$("teamChange"); tc.hidden=!tc.hidden; renderTeams(); };
   $("hTeamN").onchange=()=>{ hostTeamDraft=Number($("hTeamN").value)||0; fillTeamHost(); };
@@ -1056,7 +1197,7 @@ function wire(){
 }
 
 /* ---------- boot ---------- */
-function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderSolo(); renderBuzz(); }
+function becomeHost(){ if(canEdit) return; canEdit=true; $("previewBtn").hidden=false; $("hostCard").hidden=false; $("hostLogin").hidden=true; fillHost(); fillTeamHost(); renderSolo(); renderBuzz(); hostLetterWatch(); renderLetters(); }
 function failGate(msg){ $("gateNote").dataset.err=msg; $("gateNote").textContent=msg; $("liveText").textContent="연결 안 됨"; }
 async function boot(){
   drawPlan(); wire(); renderSchedule(); buildEntry(""); renderGate(); show("gateView");
@@ -1089,6 +1230,7 @@ async function boot(){
   fx.onValue(R("solo"), s=>{ soloData=s.val()||{}; if(soloData[uid] && soloDraft && !Object.keys(soloDraft.me).length && !Object.keys(soloDraft.want).length) soloDraft=null; renderSolo(); }, ()=>{});
   fx.onValue(R("soloMatch"), s=>{ soloMatch=s.val()||{}; renderSolo(); }, ()=>{});
   fx.onValue(R("buzz"), s=>{ buzz=s.val()||{}; renderBuzz(); }, ()=>{});
+  fx.onValue(R("letterCfg"), s=>{ letterCfg=s.val()||{}; renderLetters(); }, ()=>{});
   fx.onValue(R("presence"), s=>{ presData = s.val()||{}; if(me) renderPeers(); }, ()=>{});
   fx.onValue(R("hostClaims/"+uid), s=>{ if(s.exists() && !claiming) becomeHost(); }, ()=>{});
   startGuestbook();
