@@ -322,11 +322,11 @@ textarea{resize:vertical;min-height:70px}
           <button class="btn small" id="hScoreReset" type="button">팀 점수 0으로</button></div>
         <div id="hScore"></div>
         <span class="status" id="hTeamStatus"></span>
-        <div class="kicker" style="margin-top:12px">개인 점수</div>
-        <p class="note" style="margin:4px 0">팀전 코너는 위의 팀 점수, 개인전 코너는 여기서 사람별로 줘요.</p>
-        <input type="search" id="hPSearch" placeholder="이름 검색" aria-label="개인 점수 줄 사람 이름 검색" autocomplete="off">
+        <div class="kicker" style="margin-top:12px">이름으로 팀 점수 주기</div>
+        <p class="note" style="margin:4px 0">맞힌 사람 이름을 찾아 누르면 그 사람의 팀에 점수가 들어가요.</p>
+        <input type="search" id="hPSearch" placeholder="이름 검색" aria-label="팀 점수 줄 사람 이름 검색" autocomplete="off">
         <div id="hPScore" class="pscroll"></div>
-        <div class="row"><button class="btn small" id="hPReset" type="button">개인 점수 0으로</button></div>
+        <div class="row" hidden><button class="btn small" id="hPReset" type="button">개인 점수 0으로</button></div>
         <span class="status" id="hPStatus"></span>
         <div class="kicker" style="margin-top:12px">💕 나는 연구자 매칭</div>
         <p class="note" style="margin:4px 0" id="hSoloInfo">참여 0명</p>
@@ -337,7 +337,7 @@ textarea{resize:vertical;min-height:70px}
         </div>
         <div class="row">
           <button class="btn small" id="hSoloBig" type="button">매칭 결과 크게 보기</button>
-          <button class="btn small" id="hSoloBest" type="button">궁합 1위 둘 다 +20</button>
+          <button class="btn small" id="hSoloBest" type="button">궁합 1위 커플 팀에 +20씩</button>
           <button class="btn small" id="hSoloReset" type="button">매칭 초기화</button>
         </div>
         <div id="hSoloPreview" class="scorelist"></div>
@@ -361,8 +361,8 @@ textarea{resize:vertical;min-height:70px}
 <div class="bigboard" id="bigBoard" hidden>
   <h2>🏆 점수판</h2>
   <div class="bigcols">
-    <div class="bigcol" id="bigTeamCol"><h3>팀 점수</h3><div class="biglist" id="bigList"></div></div>
-    <div class="bigcol"><h3>개인 TOP 10</h3><div class="biglist p" id="bigPList"></div></div>
+    <div class="bigcol" id="bigTeamCol"><div class="biglist" id="bigList"></div></div>
+    <div class="bigcol" hidden><h3>개인 TOP 10</h3><div class="biglist p" id="bigPList"></div></div>
   </div>
   <button class="btn" id="bigClose" type="button">닫기</button>
 </div>
@@ -387,11 +387,11 @@ const ZONES = [
   {id:"repo", name:"현장 르포 상영관", kicker:"R-102 · 19:10", x:30,y:180,w:260,h:140, fill:"rgba(60,116,81,.30)",
    desc:"카메라가 따라간 USDL의 평소 모습. 수업, 출근길, 퀵보드, 미팅 직전 첫 표정."},
   {id:"quiz", name:"유(에스디엘) 퀴즈", kicker:"R-103 · 19:20", x:30,y:330,w:260,h:140, fill:"rgba(168,53,43,.30)",
-   desc:"반려동물과 주인 매칭, 교수님 연구실 물건 사진의 위치 맞히기. 정답 1문제당 +10점."},
+   desc:"반려동물과 주인 매칭, 교수님 연구실 물건 사진의 위치 맞히기. 정답 1문제당 팀 +10점."},
   {id:"gift", name:"선물교환", kicker:"R-104 · 20:50", x:30,y:480,w:260,h:130, fill:"rgba(60,116,81,.22)",
    desc:"선물에 붙은 번호표를 확인하고 교환해요. 끝나면 바로 시상식!"},
   {id:"xres", name:"환승연구", kicker:"R-201 카페 · 19:40", x:710,y:30,w:260,h:140, fill:"rgba(168,53,43,.30)",
-   desc:"과거의 연구를 떠나 새로운 연구를 만난 연구자들. 이름을 가린 X-연구의 주인을 맞히면 +15점."},
+   desc:"과거의 연구를 떠나 새로운 연구를 만난 연구자들. 이름을 가린 X-연구의 주인을 맞히면 팀 +15점."},
   {id:"solo", name:"나는 연구자", kicker:"R-202 미팅룸 · 20:00", x:710,y:180,w:260,h:140, fill:"rgba(60,116,81,.30)",
    desc:"연구를 찾고 싶은 솔로 연구자들의 극사실주의 연구 프로그램. 오른쪽 ‘나는 연구자’ 카드에서 내 성향과 원하는 성향을 고르면 가장 잘 맞는 사람끼리 매칭돼요."},
   {id:"photo", name:"단체사진 포토존", kicker:"R-203 · 21:20", x:710,y:330,w:260,h:140, fill:"rgba(168,53,43,.22)",
@@ -846,13 +846,13 @@ async function resetScores(){
 let checkins={}, pscores={}, lastMyPts=null;
 function people(){
   return Object.entries(checkins).map(([id,c])=>{ c=c||{}; const t=teamOf(c.team);
-    return {id, name:String(c.alias||"익명").slice(0,12), team:t?t.name:"", color:(t&&t.color)||c.color||"#8a8f88", score:Number(pscores[id])||0}; });
+    return {id, tid:t?t.id:null, name:String(c.alias||"익명").slice(0,12), team:t?t.name:"", color:(t&&t.color)||c.color||"#8a8f88", score:Number(pscores[id])||0}; });
 }
 function rankList(list){ const out=[]; list.forEach((p,i)=>{ out.push({...p, rank: i>0 && list[i-1].score===p.score ? out[i-1].rank : i+1}); }); return out; }
 function renderPersonal(){
   const ranked=rankList(people().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,"ko")));
   const scored=ranked.filter(p=>p.score>0); const max=Math.max(0,...ranked.map(p=>p.score));
-  $("meCard").hidden=!me;
+  $("meCard").hidden=true;
   const mine=Number(pscores[uid])||0; const el=$("myPts"); el.textContent=mine;
   if(lastMyPts!==null && lastMyPts!==mine){ el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); } lastMyPts=mine;
   const meRow=ranked.find(p=>p.id===uid);
@@ -874,12 +874,17 @@ function renderHostP(){
     const r=document.createElement("div"); r.className="hrow p";
     const l=document.createElement("span"); l.className="who"; const dot=document.createElement("i");
     dot.style.cssText="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:"+p.color;
-    l.append(dot,document.createTextNode(p.name+(p.team?" ("+p.team+")":"")+" · "+p.score+"점"));
+    l.append(dot,document.createTextNode(p.name+(p.team?" → "+p.team:" (팀 없음)")));
     const bs=document.createElement("div"); bs.className="btns";
     for(const d of [-1,1,5,10,15,20]){ const b=document.createElement("button"); b.type="button"; b.className="btn small"; b.textContent=(d>0?"+":"")+d;
-      b.setAttribute("aria-label",p.name+" "+(d>0?"+":"")+d+"점"); b.onclick=()=>addPScore(p.id,d); bs.appendChild(b); }
+      b.setAttribute("aria-label",p.name+" "+(d>0?"+":"")+d+"점"); b.onclick=()=>addScoreFor(p.id,d); bs.appendChild(b); }
     r.append(l,bs); box.appendChild(r);
   }
+}
+async function addScoreFor(id,d){
+  const c=checkins[id]||{}; const t=teamOf(c.team);
+  if(!t){ $("hPStatus").textContent=String(c.alias||"이 사람")+"님은 팀이 없어요. 팀을 먼저 고르게 해 주세요."; return false; }
+  await addScore(t.id,d); $("hPStatus").textContent=String(c.alias||"")+" → "+t.name+" "+(d>0?"+":"")+d+"점"; return true;
 }
 async function addPScore(id,d){
   if(!fx) return;
@@ -1032,7 +1037,7 @@ function wire(){
     hostSolo({revealed:!soloMatch.revealed}, soloMatch.revealed?"결과를 숨겼어요.":"결과를 공개했어요!"); };
   $("hSoloBig").onclick=()=>openMatchBoard();
   $("hSoloBest").onclick=async()=>{ const g=(soloMatch.groups||[])[0]; if(!g){ $("hSoloStatus").textContent="먼저 매칭을 계산해 주세요."; return; }
-    if(!confirm((g.names||[]).join(", ")+"에게 개인 +20점을 줄까요?")) return; for(const id of g.m) await addPScore(id,20); $("hSoloStatus").textContent="궁합 1위에게 +20점을 줬어요."; };
+    if(!confirm((g.names||[]).join(", ")+"의 팀에 각각 +20점을 줄까요?")) return; for(const id of g.m) await addScoreFor(id,20); $("hSoloStatus").textContent="궁합 1위 커플의 팀에 +20점씩 줬어요."; };
   $("hSoloReset").onclick=async()=>{ if(!confirm("매칭 결과와 모든 성향 답변을 지울까요?")) return;
     try{ await fx.set(R("solo"),null); await fx.set(R("soloMatch"),null); soloDraft=null; $("hSoloStatus").textContent="초기화했어요."; }
     catch(e){ $("hSoloStatus").textContent="초기화하지 못했어요."; } };
